@@ -1,0 +1,2488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Mystery Dungeon Chronicle — Mew's Manor</title>
+<style>
+:root{
+  --bg:#08090f;--ink:#0d1020;--ink2:#121828;--ink3:#161e30;
+  --b1:#1a2840;--b2:#243550;
+  --gold:#d4a017;--gold2:#f0c040;--goldk:#7a5f08;
+  --teal:#00b8d0;--teal2:#40d8e8;--tdk:#006878;
+  --red:#d63030;--red2:#f06060;--redk:#7a1010;
+  --green:#20b840;--green2:#50e870;--greenk:#106820;
+  --purple:#8040c8;--purple2:#c080f0;
+  --amber:#c87010;--amber2:#f0b040;
+  --text:#dce8f0;--dim:#5878a0;--mid:#8898c0;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:system-ui,sans-serif;font-size:13px;display:flex;flex-direction:column}
+
+/* KEY GATE */
+#key-gate{position:fixed;inset:0;background:rgba(5,6,12,.97);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px}
+#key-box{background:var(--ink2);border:1px solid var(--b2);border-radius:12px;padding:28px 24px;width:100%;max-width:440px}
+#key-box h2{font-size:18px;color:var(--gold2);margin-bottom:6px}
+#key-box p{font-size:12px;color:var(--dim);line-height:1.65;margin-bottom:14px}
+#key-input{width:100%;background:var(--bg);border:1px solid var(--b2);border-radius:6px;color:var(--text);font-size:13px;padding:8px 10px;font-family:monospace;margin-bottom:8px}
+#key-err{font-size:11px;color:var(--red2);min-height:1em;margin-bottom:8px}
+.key-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.key-links a{font-size:11px;color:var(--teal);text-decoration:none}
+
+/* HEADER */
+#hdr{background:linear-gradient(135deg,#060810,#0c1428);border-bottom:2px solid var(--b2);padding:6px 12px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+#hdr-title{font-size:14px;font-weight:600;color:var(--gold2);letter-spacing:.04em;flex:1}
+.hdr-stat{font-size:11px;color:var(--dim);display:flex;align-items:center;gap:3px}
+.hdr-stat span{color:var(--gold)}
+
+/* NAV */
+#nav{display:flex;background:var(--ink);border-bottom:1px solid var(--b1);flex-shrink:0;overflow-x:auto;scrollbar-width:none}
+#nav::-webkit-scrollbar{display:none}
+.ntab{flex:1;min-width:60px;padding:7px 4px;background:none;border:none;border-bottom:2px solid transparent;color:var(--dim);font-size:10px;cursor:pointer;text-transform:uppercase;letter-spacing:.05em;transition:.15s;white-space:nowrap;font-family:inherit;position:relative}
+.ntab:hover{color:var(--mid)}
+.ntab.act{color:var(--gold2);border-bottom-color:var(--gold)}
+.ntab .nbadge{position:absolute;top:3px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--red2);display:none}
+.ntab .nbadge.show{display:block}
+
+/* PANELS */
+#panels{flex:1;overflow:hidden}
+.pnl{display:none;height:100%;overflow-y:auto;padding:10px}
+.pnl.act{display:block}
+
+/* CARDS */
+.card{background:var(--ink2);border:1px solid var(--b2);border-radius:8px;padding:11px;margin-bottom:9px}
+.chd{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--b1)}
+
+/* GRIDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.g6{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+@media(min-width:480px){.g6{grid-template-columns:repeat(6,1fr)}}
+@media(max-width:400px){.g2{grid-template-columns:1fr}}
+
+/* FORM */
+label{font-size:11px;color:var(--dim);display:block;margin-bottom:3px;margin-top:6px}
+input,textarea,select{width:100%;background:var(--bg);border:1px solid var(--b2);border-radius:5px;color:var(--text);font-size:12px;padding:5px 7px;font-family:inherit;outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--teal)}
+textarea{resize:vertical;min-height:52px}
+select option{background:var(--ink2)}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:5px;border:1px solid var(--goldk);background:rgba(212,160,23,.12);color:var(--gold2);font-size:11px;cursor:pointer;transition:.15s;font-family:inherit;white-space:nowrap}
+.btn:hover{background:rgba(212,160,23,.25)}
+.btn:disabled{opacity:.3;cursor:not-allowed}
+.btn-t{border-color:var(--tdk);background:rgba(0,184,208,.1);color:var(--teal2)}
+.btn-t:hover{background:rgba(0,184,208,.22)}
+.btn-r{border-color:var(--redk);background:rgba(214,48,48,.1);color:var(--red2)}
+.btn-r:hover{background:rgba(214,48,48,.2)}
+.btn-g{border-color:var(--greenk);background:rgba(32,184,64,.1);color:var(--green2)}
+.btn-g:hover{background:rgba(32,184,64,.2)}
+.btn-p{border-color:var(--purple);background:rgba(128,64,200,.1);color:var(--purple2)}
+.btn-p:hover{background:rgba(128,64,200,.2)}
+.btn-a{border-color:var(--amber);background:rgba(200,112,16,.1);color:var(--amber2)}
+.btn-a:hover{background:rgba(200,112,16,.2)}
+.btn-sm{padding:3px 7px;font-size:10px}
+.btn-lg{padding:7px 14px;font-size:12px}
+
+/* STAT BOXES */
+.sbox{background:var(--bg);border:1px solid var(--b2);border-radius:6px;padding:5px 4px;text-align:center}
+.sl{font-size:10px;color:var(--gold);letter-spacing:.1em;text-transform:uppercase}
+.sv{font-size:20px;font-weight:600;color:var(--text);line-height:1.1}
+.sm{font-size:11px;color:var(--teal)}
+
+/* HP */
+.hpbar{height:8px;background:var(--bg);border-radius:99px;overflow:hidden;border:1px solid var(--b1);margin:3px 0}
+.hpfill{height:100%;border-radius:99px;transition:.4s}
+.hptxt{font-size:11px;color:var(--dim)}
+
+/* XP */
+.xpbar{height:5px;background:var(--bg);border-radius:99px;overflow:hidden;border:1px solid var(--b1);margin:2px 0}
+.xpfill{height:100%;background:linear-gradient(90deg,var(--purple),var(--purple2));border-radius:99px;transition:.4s}
+
+/* TYPE BADGES */
+.tbadge{display:inline-block;padding:1px 5px;border-radius:99px;font-size:9px;font-weight:600}
+.t-normal{background:#9fa09e22;color:#b0b0a8;border:1px solid #9fa09e44}
+.t-fire{background:#f0823022;color:#f4a060;border:1px solid #f0823044}
+.t-water{background:#6890f022;color:#90b0f8;border:1px solid #6890f044}
+.t-grass{background:#78c85022;color:#98d878;border:1px solid #78c85044}
+.t-electric{background:#f8d03022;color:#f8e068;border:1px solid #f8d03044}
+.t-ice{background:#98d8d822;color:#b8e8e8;border:1px solid #98d8d844}
+.t-fighting{background:#c0302822;color:#e06060;border:1px solid #c0302844}
+.t-poison{background:#a0408022;color:#d090d0;border:1px solid #a0408044}
+.t-ground{background:#e0c06822;color:#d8b860;border:1px solid #e0c06844}
+.t-flying{background:#a890f022;color:#c0b0f8;border:1px solid #a890f044}
+.t-psychic{background:#f8588822;color:#f890a8;border:1px solid #f8588844}
+.t-bug{background:#a8b82022;color:#c8d048;border:1px solid #a8b82044}
+.t-rock{background:#b8a03822;color:#c8b068;border:1px solid #b8a03844}
+.t-ghost{background:#70588822;color:#9880c8;border:1px solid #70588844}
+.t-dark{background:#70583822;color:#b09878;border:1px solid #70583844}
+.t-dragon{background:#7038f822;color:#a880f8;border:1px solid #7038f844}
+.t-steel{background:#b8b8d022;color:#c8c8e0;border:1px solid #b8b8d044}
+.t-fairy{background:#f0b6bc22;color:#f0c8d8;border:1px solid #f0b6bc44}
+
+/* STORY */
+#story-wrap{display:flex;flex-direction:column;height:100%;overflow:hidden}
+#party-bar{background:var(--bg);border-bottom:1px solid var(--b1);padding:5px 10px;display:flex;gap:5px;align-items:center;flex-wrap:wrap;flex-shrink:0;min-height:70px}
+#log{flex:1;overflow-y:auto;padding:10px 12px;font-size:12px;line-height:1.78}
+#log p{margin-bottom:5px}
+.dm{color:#98bcd0;font-style:italic}
+.sys{text-align:center;font-size:10px;color:var(--dim);padding:2px 0;border-top:1px solid rgba(26,40,64,.4);border-bottom:1px solid rgba(26,40,64,.4);margin:4px 0;letter-spacing:.06em}
+.bev{text-align:center;font-size:11px;color:var(--teal);margin:3px 0}
+.skr{background:rgba(0,184,208,.07);border:1px solid rgba(0,184,208,.3);border-radius:5px;padding:4px 8px;font-size:12px;color:var(--teal2);margin:4px 0}
+.lvup{background:rgba(128,64,200,.1);border:1px solid var(--purple);border-radius:6px;padding:6px 10px;margin:4px 0;color:var(--purple2);font-size:12px}
+.bw{display:flex;gap:8px;align-items:flex-start;margin:5px 0}
+.bw.me{flex-direction:row-reverse}
+.bsp{display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0}
+.bsp img{width:44px;height:44px;image-rendering:pixelated;border-radius:5px;border:1px solid var(--b1)}
+.bsp .bn{font-size:9px;text-align:center;max-width:48px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btxt{flex:1;background:var(--ink2);border:1px solid var(--b2);border-radius:0 7px 7px 7px;padding:5px 8px;font-size:12px;line-height:1.65}
+.bw.me .btxt{border-radius:7px 0 7px 7px;border-color:rgba(32,184,64,.3);background:#0d1f0e}
+#action-area{background:var(--ink);border-top:1px solid var(--b1);padding:7px 10px;flex-shrink:0}
+#pinput{width:100%;background:var(--bg);border:1px solid var(--b2);border-radius:6px;color:var(--text);font-size:12px;padding:5px 8px;resize:none;height:48px;font-family:inherit}
+#pinput:focus{outline:none;border-color:var(--teal)}
+.arow{display:flex;gap:3px;margin-top:4px;flex-wrap:wrap}
+
+/* PARTY BAR PILLS */
+.pill{display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--ink2);border:1px solid var(--b1);border-radius:6px;padding:3px 4px;cursor:pointer;transition:.15s;min-width:52px}
+.pill:hover{border-color:var(--teal)}
+.pill img,.pill .pph{width:42px;height:42px;image-rendering:pixelated;border-radius:4px}
+.pill .pph{background:var(--ink3);border:1px solid var(--b1);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--dim)}
+.pill .pnm{font-size:9px;max-width:50px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
+.pbar{width:40px;height:3px;background:var(--b1);border-radius:99px;overflow:hidden}
+.pfill{height:100%;border-radius:99px;transition:.3s}
+
+/* AUTOCOMPLETE */
+.ac-wrap{position:relative}
+.ac-list{position:absolute;top:100%;left:0;right:0;background:var(--ink2);border:1px solid var(--tdk);border-top:none;border-radius:0 0 6px 6px;z-index:99;max-height:150px;overflow-y:auto;display:none}
+.ac-list.open{display:block}
+.ac-item{padding:5px 8px;font-size:12px;cursor:pointer;border-bottom:1px solid var(--b1)}
+.ac-item:hover,.ac-item.sel{background:rgba(0,184,208,.15);color:var(--teal2)}
+
+/* PARTY CARDS */
+.pc{background:var(--ink2);border:1px solid var(--b2);border-radius:8px;margin-bottom:9px;overflow:hidden}
+.pc-hd{display:flex;gap:9px;padding:9px;border-bottom:1px solid var(--b1);background:rgba(10,15,30,.5)}
+.pc-hd img,.pph2{width:68px;height:68px;image-rendering:pixelated;border-radius:5px;flex-shrink:0}
+.pph2{background:var(--bg);border:1px solid var(--b1);display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--dim)}
+.pc-nm{font-size:13px;font-weight:600;color:var(--gold2)}
+.pc-sp{font-size:11px;color:var(--teal);margin:2px 0 4px}
+.tag{font-size:10px;padding:2px 7px;border-radius:99px;border:1px solid var(--gold);color:var(--gold);display:inline-block;margin:2px 2px 0 0}
+.barm{display:flex;align-items:center;gap:6px;margin-top:4px}
+.barm .bar{flex:1;height:4px;background:var(--bg);border-radius:99px;overflow:hidden}
+.barm .bfill{height:100%;background:var(--teal);border-radius:99px;transition:.4s}
+.pc-body{padding:9px;font-size:12px}
+.sec{margin-bottom:6px}
+.sec-h{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:3px}
+.sec-t{color:var(--text);line-height:1.55}
+.sbox2{border-left:2px solid var(--purple);padding:4px 8px;background:rgba(128,64,200,.08);color:#c0a0e8;font-style:italic;font-size:12px;line-height:1.5}
+.pc-ft{display:flex;gap:4px;padding:6px 9px;background:rgba(0,0,0,.2);flex-wrap:wrap;align-items:center}
+
+/* SKILLS */
+.sk-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px}
+@media(min-width:460px){.sk-grid{grid-template-columns:repeat(3,1fr)}}
+.sk-row{display:flex;align-items:center;gap:5px;padding:3px 5px;background:var(--bg);border-radius:4px;cursor:pointer}
+.sk-row:hover{background:rgba(26,40,64,.7)}
+.sk-dot{width:11px;height:11px;border-radius:50%;border:1px solid var(--b1);flex-shrink:0;transition:.15s}
+.sk-dot.prof{background:var(--teal);border-color:var(--teal)}
+.sk-nm{font-size:11px;flex:1}.sk-st{font-size:10px;color:var(--dim)}
+.sk-bn{font-size:11px;color:var(--teal);font-weight:600;min-width:20px;text-align:right}
+.sk-rb{padding:1px 4px;border-radius:3px;border:1px solid var(--b1);background:transparent;color:var(--dim);font-size:10px;cursor:pointer;font-family:inherit}
+.sk-rb:hover{border-color:var(--gold);color:var(--gold)}
+
+/* CONDITIONS */
+.cond-grid{display:flex;flex-wrap:wrap;gap:4px}
+.cond{padding:2px 8px;border-radius:99px;border:1px solid var(--b1);font-size:11px;cursor:pointer;user-select:none;transition:.15s}
+.cond.on{border-color:var(--red);background:rgba(214,48,48,.15);color:var(--red2)}
+
+/* LEVEL UP MODAL */
+#lvup-modal{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:999;padding:16px}
+#lvup-modal.open{display:flex}
+.modal-box{background:var(--ink2);border:1px solid var(--b2);border-radius:10px;padding:18px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto}
+.modal-box h3{font-size:15px;color:var(--gold2);margin-bottom:6px}
+
+/* MOVE LEARN MODAL */
+#learn-modal{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:1000;padding:16px}
+#learn-modal.open{display:flex}
+.forget-slot{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:6px;border:1px solid var(--b2);background:var(--ink);margin-bottom:5px;cursor:pointer;transition:.15s}
+.forget-slot:hover{border-color:var(--red2);background:rgba(214,48,48,.08)}
+.new-move-prev{background:rgba(32,184,64,.08);border:1px solid rgba(32,184,64,.3);border-radius:6px;padding:8px;margin-bottom:10px}
+
+/* MAP */
+#map-layout{display:flex;flex-direction:column;height:100%;overflow:hidden}
+#map-top{display:flex;flex:1;min-height:0;overflow:hidden}
+#map-left{width:260px;flex-shrink:0;border-right:1px solid var(--b1);display:flex;flex-direction:column;overflow:hidden}
+#map-right{flex:1;overflow-y:auto;padding:10px}
+#manor-svg-wrap{padding:8px;flex-shrink:0}
+#manor-svg-wrap svg{width:100%;height:auto}
+#loc-list{flex:1;overflow-y:auto;border-top:1px solid var(--b1);padding:7px}
+.loc-item{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:6px;border:1px solid var(--b1);background:var(--ink2);margin-bottom:3px;cursor:pointer;transition:.15s}
+.loc-item:hover:not(.locked){border-color:var(--b2)}
+.loc-item.act{border-color:var(--gold);background:rgba(212,160,23,.07)}
+.loc-item.locked{opacity:.4;cursor:default}
+.loc-icon{width:28px;height:28px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.loc-nm{font-size:11px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.loc-sub{font-size:9px;color:var(--dim)}
+.sbadge{font-size:9px;padding:1px 5px;border-radius:99px;border:1px solid;white-space:nowrap;flex-shrink:0}
+.sb-safe{border-color:var(--green);color:var(--green2)}
+.sb-exp{border-color:var(--amber);color:var(--amber2)}
+.sb-clear{border-color:var(--teal);color:var(--teal2)}
+.sb-lock{border-color:var(--b2);color:var(--dim)}
+/* FLOOR DOTS */
+.fdots{display:flex;gap:3px;flex-wrap:wrap;margin:6px 0}
+.fdot{width:12px;height:12px;border-radius:50%;border:1px solid var(--b2);background:var(--bg);cursor:pointer;transition:.15s}
+.fdot:hover{border-color:var(--teal)}
+.fdot.visited{background:var(--teal);border-color:var(--teal)}
+.fdot.cur{background:var(--gold);border-color:var(--gold);box-shadow:0 0 6px rgba(212,160,23,.5)}
+.fdot.boss{border-color:var(--red2)}
+.fdot.boss.visited{background:var(--red);border-color:var(--red)}
+/* FLOOR EVENTS LOG */
+.floor-event{font-size:11px;padding:3px 7px;border-radius:4px;border-left:2px solid var(--b2);margin-bottom:3px;color:var(--dim)}
+.floor-event.enemy{border-left-color:var(--red)}
+.floor-event.item{border-left-color:var(--gold)}
+.floor-event.event{border-left-color:var(--purple)}
+/* NPC ROWS */
+.npc-row{display:flex;gap:8px;align-items:flex-start;padding:7px;background:var(--bg);border-radius:6px;border:1px solid var(--b1);margin-bottom:6px}
+.npc-row img,.nph{width:38px;height:38px;image-rendering:pixelated;border-radius:4px;flex-shrink:0}
+.nph{background:var(--ink2);border:1px solid var(--b1);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--dim)}
+.npc-nm{font-size:12px;font-weight:600;color:var(--gold2)}
+.npc-rl{font-size:10px;color:var(--teal);margin-bottom:2px}
+.npc-ln{font-size:11px;color:var(--dim);font-style:italic;line-height:1.5}
+/* SHOP */
+.shop-item{display:flex;align-items:center;gap:7px;padding:5px 7px;background:var(--bg);border-radius:5px;border:1px solid var(--b1);margin-bottom:4px}
+/* QUESTS */
+.q-card{background:var(--bg);border:1px solid var(--b1);border-radius:6px;padding:7px;margin-bottom:5px}
+.q-card.q-active{border-color:rgba(212,160,23,.4)}
+.q-card.q-done{border-color:rgba(32,184,64,.4);opacity:.6}
+.q-title{font-size:12px;font-weight:600;color:var(--gold2);margin-bottom:2px}
+.q-desc{font-size:11px;color:var(--dim);line-height:1.5;margin-bottom:4px}
+.q-rew{font-size:10px;color:var(--amber2)}
+.q-sb{font-size:9px;padding:2px 6px;border-radius:99px;border:1px solid;display:inline-block}
+.qs-new{border-color:var(--teal);color:var(--teal2)}
+.qs-act{border-color:var(--amber);color:var(--amber2)}
+.qs-done{border-color:var(--green);color:var(--green2)}
+/* COMBAT */
+.arena{background:linear-gradient(180deg,#050810,#0a0e18);border:1px solid var(--b2);border-radius:10px;padding:10px;margin-bottom:8px;position:relative;overflow:hidden}
+.arena::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(26,40,64,.12) 39px,rgba(26,40,64,.12) 40px),repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(26,40,64,.12) 39px,rgba(26,40,64,.12) 40px);pointer-events:none}
+.combatants{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;position:relative;z-index:1}
+.ccard{flex:1;min-width:120px;background:rgba(8,10,20,.85);border:1px solid var(--b2);border-radius:7px;padding:7px}
+.ccard.ally{border-color:rgba(32,184,64,.3)}.ccard.foe{border-color:rgba(214,48,48,.3)}
+.ccard.cur{box-shadow:0 0 12px rgba(212,160,23,.4);border-color:var(--gold)}
+.ccard.fainted{opacity:.35;filter:grayscale(1)}
+.crow{display:flex;gap:6px;align-items:flex-start;margin-bottom:4px}
+.crow img,.cph{width:44px;height:44px;image-rendering:pixelated;border-radius:4px;flex-shrink:0}
+.cph{background:var(--ink);border:1px solid var(--b1);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--dim)}
+.cnm{font-size:12px;font-weight:600;color:var(--gold2)}
+.csub{font-size:10px;color:var(--mid);margin-bottom:3px}
+.c-hpb{height:7px;background:rgba(10,14,24,.8);border-radius:99px;overflow:hidden;border:1px solid var(--b1);margin:2px 0}
+.c-hpf{height:100%;border-radius:99px;transition:.4s}
+.c-hpt{font-size:10px;color:var(--dim)}
+.cstats{display:flex;gap:2px;flex-wrap:wrap;margin-top:2px}
+.spip{font-size:9px;padding:1px 5px;border-radius:99px;border:1px solid}
+.sp-burned{border-color:rgba(240,128,32,.6);color:#f0a040;background:rgba(240,128,32,.1)}
+.sp-poisoned{border-color:rgba(160,64,200,.6);color:#c080e0;background:rgba(160,64,200,.1)}
+.sp-paralyzed{border-color:rgba(248,208,48,.6);color:#f8d860;background:rgba(248,208,48,.1)}
+.sp-frozen{border-color:rgba(100,200,220,.6);color:#80d8e8;background:rgba(100,200,220,.1)}
+.sp-confused{border-color:rgba(168,80,220,.6);color:#c090e8;background:rgba(168,80,220,.1)}
+.sp-asleep{border-color:rgba(100,120,200,.6);color:#9090d8;background:rgba(100,120,200,.1)}
+.vs-div{display:flex;align-items:center;justify-content:center;padding-top:14px;flex-shrink:0}
+/* INIT BAR */
+.init-bar{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding-bottom:3px}
+.init-bar::-webkit-scrollbar{display:none}
+.isl{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 5px;border-radius:5px;border:1px solid var(--b1);background:var(--ink);min-width:48px;flex-shrink:0}
+.isl.cur{border-color:var(--gold);background:rgba(212,160,23,.08)}
+.isl.done{opacity:.3}
+.isl img,.iph{width:28px;height:28px;image-rendering:pixelated;border-radius:3px}
+.iph{background:var(--ink2);border:1px solid var(--b1);display:flex;align-items:center;justify-content:center;font-size:10px}
+.isl .in{font-size:9px;text-align:center;max-width:44px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.isl .ir{font-size:11px;font-weight:600;color:var(--gold)}
+/* MOVE GRID */
+.mg{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px}
+.mb{background:var(--ink);border:1px solid var(--b2);border-radius:6px;padding:6px 7px;cursor:pointer;transition:.15s;text-align:left;position:relative;overflow:hidden;font-family:inherit}
+.mb:hover:not(:disabled){border-color:var(--teal);background:rgba(0,184,208,.06)}
+.mb:disabled{opacity:.32;cursor:not-allowed}
+.mb .mn{font-size:12px;font-weight:600;color:var(--text);margin-bottom:1px}
+.mb .ms{font-size:10px;color:var(--dim)}
+.mb .pp-r{display:flex;gap:2px;margin-top:2px;flex-wrap:wrap}
+.pip{width:5px;height:5px;border-radius:50%;background:var(--teal);display:inline-block}
+.pip.sp{background:var(--b1)}
+.stab-tag{position:absolute;top:3px;right:4px;font-size:8px;background:rgba(212,160,23,.2);border:1px solid var(--goldk);border-radius:3px;padding:1px 3px;color:var(--gold)}
+.eff-s{color:var(--red2);font-size:10px;font-weight:600}
+.eff-r{color:var(--teal);font-size:10px}
+.eff-i{color:var(--dim);font-size:10px}
+/* CMD GRID */
+.cmd-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:5px}
+.cmd-btn{background:var(--ink);border:1px solid var(--b2);border-radius:6px;padding:6px 7px;cursor:pointer;transition:.15s;text-align:left;font-family:inherit}
+.cmd-btn:hover:not(:disabled){border-color:var(--amber);background:rgba(200,112,16,.08)}
+.cmd-btn:disabled{opacity:.3;cursor:not-allowed}
+.cmd-title{font-size:11px;font-weight:600;color:var(--amber2);margin-bottom:1px}
+.cmd-sub{font-size:10px;color:var(--dim);line-height:1.4}
+.bond-badge{font-size:9px;padding:1px 5px;border-radius:99px;border:1px solid var(--purple);color:var(--purple2);background:rgba(128,64,200,.1);display:inline-block;margin-left:3px}
+/* COMBAT LOG */
+.clog{height:120px;overflow-y:auto;background:var(--bg);border:1px solid var(--b1);border-radius:6px;padding:6px 9px;font-size:11px;line-height:1.65;scrollbar-width:thin}
+.clog p{margin-bottom:2px}
+.cl-hit{color:var(--gold2)}.cl-miss{color:var(--dim)}.cl-super{color:var(--red2);font-weight:600}.cl-resist{color:var(--teal)}.cl-immune{color:var(--dim)}.cl-crit{color:var(--amber2);font-weight:600}.cl-heal{color:var(--green2)}.cl-status{color:var(--purple2)}.cl-sys{text-align:center;font-size:10px;color:var(--dim);border-top:1px solid rgba(26,40,64,.4);border-bottom:1px solid rgba(26,40,64,.4);padding:2px 0;margin:3px 0;letter-spacing:.05em}.cl-bond{color:var(--amber2);font-style:italic}.cl-cmd{color:var(--amber);font-size:11px}
+/* DUNGEON WEATHER */
+.weather-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;border:1px solid var(--b2);font-size:10px;color:var(--mid)}
+/* MISC */
+.inv-item{display:flex;align-items:center;gap:5px;padding:5px 7px;background:var(--bg);border:1px solid var(--b1);border-radius:5px;margin-bottom:4px}
+.empty{text-align:center;padding:20px;color:var(--dim);font-style:italic;font-size:12px}
+.sp{margin-top:7px}
+.flex{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.divider{border:none;border-top:1px solid var(--b1);margin:8px 0}
+@keyframes hitA{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes critA{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+.hit-a{animation:hitA .4s ease}
+.crit-a{animation:critA .4s ease}
+</style>
+</head>
+<body>
+
+<!-- KEY GATE -->
+<div id="key-gate">
+  <div id="key-box">
+    <h2>⚔ Mystery Dungeon Chronicle</h2>
+    <p>Enter your Anthropic API key to power the AI Dungeon Master, companion generation, and story narration. Your key is saved locally in this browser and sent only to Anthropic's API.</p>
+    <input type="password" id="key-input" placeholder="sk-ant-api03-…" autocomplete="off"/>
+    <div id="key-err"></div>
+    <button class="btn btn-t btn-lg" onclick="saveKey()" style="width:100%;justify-content:center">Enter the Dungeon →</button>
+    <div class="key-links">
+      <a href="https://console.anthropic.com" target="_blank">Get API key ↗</a>
+      <a href="https://www.anthropic.com/pricing" target="_blank">Pricing ↗</a>
+      <a href="#" onclick="skipKey()">Play offline (no AI) ↗</a>
+    </div>
+  </div>
+</div>
+
+<!-- LEVEL UP MODAL -->
+<div id="lvup-modal">
+  <div class="modal-box">
+    <h3>⭐ Level Up!</h3>
+    <div id="lvup-content"></div>
+    <button class="btn btn-t btn-lg" onclick="closeLvUp()" style="margin-top:10px;width:100%;justify-content:center">Confirm Level Up</button>
+  </div>
+</div>
+
+<!-- MOVE LEARN MODAL -->
+<div id="learn-modal">
+  <div class="modal-box">
+    <h3>Learn New Move?</h3>
+    <p style="font-size:12px;color:var(--dim);margin-bottom:8px">You already know 4 moves. Choose one to forget — or cancel to skip this move.</p>
+    <div class="new-move-prev" id="learn-new-prev"></div>
+    <div id="learn-forget-slots"></div>
+    <button class="btn btn-r btn-sm" onclick="closeLearnModal()">Cancel — Don't Learn</button>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div id="hdr">
+  <div id="hdr-title">⚔ Mew's Manor Chronicle</div>
+  <div class="hdr-stat">HP <span id="hdr-hp">—</span></div>
+  <div class="hdr-stat">Lv <span id="hdr-lv">—</span></div>
+  <div class="hdr-stat"><span id="hdr-gold">0</span> P</div>
+  <button style="padding:3px 7px;border-radius:4px;border:1px solid var(--b1);background:transparent;color:var(--dim);font-size:10px;cursor:pointer;font-family:inherit" onclick="showKeyGate()">Key</button>
+</div>
+
+<!-- NAV -->
+<div id="nav">
+  <button class="ntab act" onclick="goTab('story')">Story<span class="nbadge" id="nb-story"></span></button>
+  <button class="ntab" onclick="goTab('char')">Character<span class="nbadge" id="nb-char"></span></button>
+  <button class="ntab" onclick="goTab('party')">Party<span class="nbadge" id="nb-party"></span></button>
+  <button class="ntab" onclick="goTab('map')">Map</button>
+  <button class="ntab" onclick="goTab('combat')">Combat<span class="nbadge" id="nb-combat"></span></button>
+  <button class="ntab" onclick="goTab('moves')">Moves</button>
+  <button class="ntab" onclick="goTab('skills')">Skills</button>
+  <button class="ntab" onclick="goTab('bag')">Bag</button>
+  <button class="ntab" onclick="goTab('setup')">Setup</button>
+</div>
+
+<div id="panels">
+
+<!-- ═══ STORY ═══ -->
+<div class="pnl act" id="p-story">
+  <div id="story-wrap">
+    <div id="party-bar">
+      <div class="pill">
+        <div class="pph" id="pp-img">you</div>
+        <div class="pnm" id="pp-name" style="color:var(--gold)">You</div>
+        <div class="pbar"><div class="pfill" id="pp-hp-bar" style="width:100%;background:var(--green)"></div></div>
+      </div>
+      <div style="width:1px;background:var(--b1);align-self:stretch;flex-shrink:0"></div>
+      <div id="comp-pills" style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;flex:1">
+        <span style="font-size:11px;color:var(--dim);font-style:italic">Generate party on the Party tab</span>
+      </div>
+    </div>
+    <div id="log">
+      <p class="sys">Mew's Manor Chronicle</p>
+      <p class="dm">Set up your character, generate companions, configure your campaign in Setup, then press Begin Adventure. Visit the Map tab to explore Mew's Manor.</p>
+    </div>
+    <div id="action-area">
+      <textarea id="pinput" placeholder="What do you do? (Ctrl+Enter to send)"></textarea>
+      <div class="arow">
+        <button class="btn btn-t btn-sm" onclick="startAdv()">Begin Adventure</button>
+        <button class="btn btn-sm" id="act-btn" onclick="takeAct()">Act</button>
+        <button class="btn btn-sm" onclick="askDM()">Ask DM</button>
+        <button class="btn btn-sm" onclick="rollD20()">d20</button>
+        <button class="btn btn-sm btn-t" onclick="talkParty()">Talk Party</button>
+        <button class="btn btn-sm btn-r" onclick="doHpChange(-1)">Dmg</button>
+        <button class="btn btn-sm btn-g" onclick="doHpChange(1)">Heal</button>
+      </div>
+      <div class="arow" style="margin-top:3px">
+        <button class="btn btn-sm" onclick="qa('I search the area carefully.')">Search</button>
+        <button class="btn btn-sm" onclick="qa('I rest and recover.')">Rest</button>
+        <button class="btn btn-sm" onclick="qa('I move to the next room.')">Advance</button>
+        <button class="btn btn-sm" onclick="qa('I check my surroundings for threats.')">Perception</button>
+        <button class="btn btn-sm" onclick="goTab('map')">View Map</button>
+      </div>
+      <div style="font-size:10px;color:var(--dim);margin-top:3px">Ctrl+Enter to send</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CHARACTER ═══ -->
+<div class="pnl" id="p-char">
+  <div class="card" id="sp-card">
+    <div class="chd">Your Pokémon</div>
+    <p style="font-size:12px;color:var(--dim);margin-bottom:8px;line-height:1.5">Search your species to auto-load your full poke5e stat block — ability scores, AC, HP, speed, and level-1 moves all populate automatically.</p>
+    <div class="g2">
+      <div><label>Character Name</label><input id="c-name" placeholder="e.g. Ember" oninput="saveCharName()"/></div>
+      <div><label>Species</label>
+        <div class="ac-wrap">
+          <input id="c-sp-inp" placeholder="e.g. cyndaquil" autocomplete="off" oninput="acSearch(this.value)" onkeydown="acNav(event)" onfocus="acSearch(this.value)"/>
+          <div class="ac-list" id="ac-list"></div>
+        </div>
+        <div id="sp-status" style="font-size:11px;color:var(--dim);margin-top:3px;min-height:1em"></div>
+      </div>
+    </div>
+  </div>
+  <div id="char-loaded" style="display:none">
+    <!-- Hero -->
+    <div class="card">
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+          <div id="c-portrait" style="width:88px;height:88px;background:var(--bg);border:2px solid var(--b2);border-radius:7px;overflow:hidden;image-rendering:pixelated;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:22px">?</div>
+          <div style="font-size:9px;color:var(--dim)">PMDCollab</div>
+          <div id="c-emo-row" style="display:flex;gap:2px;flex-wrap:wrap;justify-content:center;max-width:92px"></div>
+        </div>
+        <div style="flex:1;min-width:130px">
+          <div style="font-size:14px;font-weight:600;color:var(--gold2)" id="c-dname">—</div>
+          <div style="font-size:11px;color:var(--teal);margin:2px 0 4px" id="c-dsub">—</div>
+          <!-- XP bar -->
+          <div style="font-size:10px;color:var(--dim);margin-bottom:2px">XP: <span id="c-xp-txt" style="color:var(--purple2)">0 / 300</span></div>
+          <div class="xpbar"><div class="xpfill" id="c-xp-bar" style="width:0%"></div></div>
+          <div class="hpbar" style="margin-top:4px"><div class="hpfill" id="c-hpbar" style="width:100%;background:var(--green)"></div></div>
+          <div class="hptxt" id="c-hptxt">—</div>
+          <div style="display:flex;gap:4px;align-items:center;margin-top:4px;flex-wrap:wrap">
+            <input id="c-hpcur" type="number" style="width:52px" oninput="saveHp()"/>
+            <span style="color:var(--dim);font-size:12px">/ <span id="c-hpmax">—</span></span>
+            <label style="display:inline;margin:0;font-size:11px">Tmp:</label>
+            <input id="c-hptmp" type="number" value="0" style="width:46px" oninput="saveChar()"/>
+          </div>
+          <div style="display:flex;gap:4px;margin-top:5px;flex-wrap:wrap">
+            <button class="btn btn-sm" onclick="changeSpecies()">Change Species</button>
+            <button class="btn btn-sm btn-p" onclick="addXP()">+ XP</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="g2">
+      <div class="card">
+        <div class="chd">Combat (poke5e)</div>
+        <div class="g3" style="gap:4px">
+          <div class="sbox"><div class="sl">AC</div><div class="sv" id="d-ac">—</div></div>
+          <div class="sbox"><div class="sl">Speed</div><div class="sv" id="d-spd">—</div><div class="sm">ft</div></div>
+          <div class="sbox"><div class="sl">HD</div><div class="sv" id="d-hd">—</div></div>
+          <div class="sbox"><div class="sl">MaxHP</div><div class="sv" id="d-mhp">—</div></div>
+          <div class="sbox"><div class="sl">Prof</div><div class="sv" id="d-prof">+2</div></div>
+          <div class="sbox"><div class="sl">Init</div><div class="sv" id="d-init">—</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="chd">Species</div>
+        <div style="font-size:12px;line-height:2.1">
+          <div><span style="color:var(--dim)">Species: </span><span id="d-sp" style="color:var(--gold)"></span></div>
+          <div><span style="color:var(--dim)">Type: </span><span id="d-types"></span></div>
+          <div><span style="color:var(--dim)">SR: </span><span id="d-sr" style="color:var(--teal)"></span></div>
+          <div><span style="color:var(--dim)">Ability: </span><span id="d-ab"></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="chd">Ability Scores</div>
+      <div class="g6">
+        <div class="sbox"><div class="sl">STR</div><div class="sv" id="d-str">—</div><div class="sm" id="m-str">+0</div></div>
+        <div class="sbox"><div class="sl">DEX</div><div class="sv" id="d-dex">—</div><div class="sm" id="m-dex">+0</div></div>
+        <div class="sbox"><div class="sl">CON</div><div class="sv" id="d-con">—</div><div class="sm" id="m-con">+0</div></div>
+        <div class="sbox"><div class="sl">INT</div><div class="sv" id="d-int">—</div><div class="sm" id="m-int">+0</div></div>
+        <div class="sbox"><div class="sl">WIS</div><div class="sv" id="d-wis">—</div><div class="sm" id="m-wis">+0</div></div>
+        <div class="sbox"><div class="sl">CHA</div><div class="sv" id="d-cha">—</div><div class="sm" id="m-cha">+0</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="chd">Saving Throws</div>
+      <div class="g6">
+        <div class="sbox"><div class="sl">STR</div><div class="sv" id="st-str">+0</div></div>
+        <div class="sbox"><div class="sl">DEX</div><div class="sv" id="st-dex">+0</div></div>
+        <div class="sbox"><div class="sl">CON</div><div class="sv" id="st-con">+0</div></div>
+        <div class="sbox"><div class="sl">INT</div><div class="sv" id="st-int">+0</div></div>
+        <div class="sbox"><div class="sl">WIS</div><div class="sv" id="st-wis">+0</div></div>
+        <div class="sbox"><div class="sl">CHA</div><div class="sv" id="st-cha">+0</div></div>
+      </div>
+    </div>
+    <div class="card"><div class="chd">Conditions</div><div class="cond-grid" id="cond-grid"></div></div>
+    <div class="card"><div class="chd">Notes</div><textarea id="c-notes" rows="3" placeholder="Backstory, personality, bonds…" oninput="saveChar()"></textarea></div>
+  </div>
+</div>
+
+<!-- ═══ PARTY ═══ -->
+<div class="pnl" id="p-party">
+  <div class="card">
+    <div class="chd">Rescue Team</div>
+    <p style="font-size:12px;color:var(--dim);line-height:1.5;margin-bottom:8px">Generate 3 random companions — each gets a full AI-written personality, motivation, secret, quirk, real poke5e stats, and PMD portrait. Their bond with you evolves through play.</p>
+    <div class="flex">
+      <button class="btn btn-t" onclick="genParty()" id="gen-btn">Generate Party</button>
+      <button class="btn btn-sm" onclick="rerollOne()" id="reroll-btn" style="display:none">Reroll One</button>
+      <button class="btn btn-r btn-sm" onclick="clearParty()" id="clear-btn" style="display:none">Disband</button>
+    </div>
+    <div id="party-status" style="margin-top:6px;font-size:11px;color:var(--dim);font-style:italic;min-height:1em"></div>
+  </div>
+  <div id="party-slots">
+    <div class="empty" id="sl-0">Slot 1 — awaiting a companion…</div>
+    <div class="empty" id="sl-1">Slot 2 — awaiting a companion…</div>
+    <div class="empty" id="sl-2">Slot 3 — awaiting a companion…</div>
+  </div>
+  <div class="card" id="reroll-pick" style="display:none">
+    <div class="chd">Reroll which slot?</div>
+    <div class="flex">
+      <button class="btn btn-sm" onclick="doReroll(0)">Slot 1</button>
+      <button class="btn btn-sm" onclick="doReroll(1)">Slot 2</button>
+      <button class="btn btn-sm" onclick="doReroll(2)">Slot 3</button>
+      <button class="btn btn-sm" onclick="document.getElementById('reroll-pick').style.display='none'">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MAP ═══ -->
+<div class="pnl" id="p-map">
+  <div id="map-layout">
+    <div id="map-top">
+      <div id="map-left">
+        <div id="manor-svg-wrap">
+          <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);padding:6px 8px 4px">Mew's Manor</div>
+          <svg viewBox="0 0 260 290" xmlns="http://www.w3.org/2000/svg">
+            <rect x="8" y="8" width="244" height="274" rx="7" fill="#0a0d18" stroke="#243550" stroke-width="1.5"/>
+            <polygon points="130,2 252,36 8,36" fill="#0d1428" stroke="#243550" stroke-width="1"/>
+            <text x="130" y="28" text-anchor="middle" font-size="8" fill="#5878a0" letter-spacing="2">MEW'S MANOR</text>
+            <!-- Hub -->
+            <g onclick="selectLoc('hub')" style="cursor:pointer">
+              <rect x="85" y="115" width="90" height="70" rx="4" fill="#121828" stroke="#d4a017" stroke-width="1.5" id="svg-hub"/>
+              <text x="130" y="143" text-anchor="middle" font-size="7" fill="#f0c040" font-weight="bold">LIVING ROOM</text>
+              <text x="130" y="153" text-anchor="middle" font-size="6" fill="#8898c0">Hub · Safe</text>
+              <text x="130" y="167" text-anchor="middle" font-size="13">🏠</text>
+            </g>
+            <!-- Connectors -->
+            <line x1="130" y1="115" x2="130" y2="92" stroke="#243550" stroke-width="1.5" stroke-dasharray="3,2"/>
+            <line x1="85" y1="150" x2="58" y2="150" stroke="#243550" stroke-width="1.5" stroke-dasharray="3,2"/>
+            <line x1="175" y1="150" x2="202" y2="150" stroke="#243550" stroke-width="1.5" stroke-dasharray="3,2"/>
+            <line x1="130" y1="185" x2="130" y2="215" stroke="#243550" stroke-width="1.5" stroke-dasharray="3,2"/>
+            <line x1="95" y1="185" x2="68" y2="220" stroke="#243550" stroke-width="1.5" stroke-dasharray="3,2"/>
+            <line x1="165" y1="185" x2="192" y2="220" stroke="#243550" stroke-width="1.5" stroke-dasharray="3,2"/>
+            <line x1="93" y1="115" x2="65" y2="80" stroke="#243550" stroke-width="1.5" stroke-dasharray="3,2"/>
+            <line x1="167" y1="115" x2="195" y2="80" stroke="#243550" stroke-width="1.5" stroke-dasharray="3,2"/>
+            <!-- Library (top, unlocked) -->
+            <g onclick="selectLoc('library')" style="cursor:pointer">
+              <rect x="93" y="50" width="74" height="58" rx="4" fill="#121828" stroke="#00b8d0" stroke-width="1.5" id="svg-library"/>
+              <text x="130" y="72" text-anchor="middle" font-size="7" fill="#40d8e8" font-weight="bold">THE LIBRARY</text>
+              <text x="130" y="82" text-anchor="middle" font-size="6" fill="#8898c0">Dungeon · F1</text>
+              <text x="130" y="96" text-anchor="middle" font-size="12">📚</text>
+            </g>
+            <!-- Cellar (bottom, unlocked) -->
+            <g onclick="selectLoc('cellar')" style="cursor:pointer">
+              <rect x="93" y="220" width="74" height="58" rx="4" fill="#121828" stroke="#8040c8" stroke-width="1.5" id="svg-cellar"/>
+              <text x="130" y="242" text-anchor="middle" font-size="7" fill="#c080f0" font-weight="bold">THE CELLAR</text>
+              <text x="130" y="252" text-anchor="middle" font-size="6" fill="#8898c0">Dungeon · F1</text>
+              <text x="130" y="266" text-anchor="middle" font-size="12">🍷</text>
+            </g>
+            <!-- Locked rooms -->
+            <g onclick="tryUnlock('left')" style="cursor:pointer"><rect x="12" y="122" width="62" height="55" rx="4" fill="#0a0d18" stroke="#1a2840" stroke-width="1" stroke-dasharray="3,2"/><text x="43" y="148" text-anchor="middle" font-size="7" fill="#1a2840">???</text><text x="43" y="162" text-anchor="middle" font-size="13">🔒</text></g>
+            <g onclick="tryUnlock('right')" style="cursor:pointer"><rect x="186" y="122" width="62" height="55" rx="4" fill="#0a0d18" stroke="#1a2840" stroke-width="1" stroke-dasharray="3,2"/><text x="217" y="148" text-anchor="middle" font-size="7" fill="#1a2840">???</text><text x="217" y="162" text-anchor="middle" font-size="13">🔒</text></g>
+            <g onclick="tryUnlock('tl')" style="cursor:pointer"><rect x="14" y="44" width="56" height="47" rx="4" fill="#0a0d18" stroke="#1a2840" stroke-width="1" stroke-dasharray="3,2"/><text x="42" y="66" text-anchor="middle" font-size="7" fill="#1a2840">???</text><text x="42" y="80" text-anchor="middle" font-size="12">🔒</text></g>
+            <g onclick="tryUnlock('tr')" style="cursor:pointer"><rect x="190" y="44" width="56" height="47" rx="4" fill="#0a0d18" stroke="#1a2840" stroke-width="1" stroke-dasharray="3,2"/><text x="218" y="66" text-anchor="middle" font-size="7" fill="#1a2840">???</text><text x="218" y="80" text-anchor="middle" font-size="12">🔒</text></g>
+            <g onclick="tryUnlock('bl')" style="cursor:pointer"><rect x="14" y="227" width="56" height="47" rx="4" fill="#0a0d18" stroke="#1a2840" stroke-width="1" stroke-dasharray="3,2"/><text x="42" y="249" text-anchor="middle" font-size="7" fill="#1a2840">???</text><text x="42" y="263" text-anchor="middle" font-size="12">🔒</text></g>
+            <g onclick="tryUnlock('br')" style="cursor:pointer"><rect x="190" y="227" width="56" height="47" rx="4" fill="#0a0d18" stroke="#1a2840" stroke-width="1" stroke-dasharray="3,2"/><text x="218" y="249" text-anchor="middle" font-size="7" fill="#1a2840">???</text><text x="218" y="263" text-anchor="middle" font-size="12">🔒</text></g>
+            <!-- Player dot -->
+            <circle id="player-dot" cx="130" cy="150" r="5" fill="#f0c040" stroke="#08090f" stroke-width="1.5" opacity=".9">
+              <animate attributeName="opacity" values="1;0.4;1" dur="1.8s" repeatCount="indefinite"/>
+            </circle>
+          </svg>
+        </div>
+        <div id="loc-list" style="padding:7px">
+          <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:5px">Locations</div>
+          <div id="loc-items"></div>
+        </div>
+      </div>
+      <div id="map-right">
+        <div id="map-detail"><div class="empty">Click a room on the map to explore.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ COMBAT ═══ -->
+<div class="pnl" id="p-combat">
+  <!-- Encounter setup -->
+  <div class="card" id="enc-setup">
+    <div class="chd">Start Encounter</div>
+    <p style="font-size:12px;color:var(--dim);margin-bottom:8px;line-height:1.5">Enter a species to pull their real poke5e stats from PokéAPI. Full type effectiveness, STAB, and companion commands apply.</p>
+    <div class="g2">
+      <div><label>Enemy Species</label><input id="enc-sp" placeholder="e.g. haunter, geodude"/></div>
+      <div><label>Name (optional)</label><input id="enc-nm" placeholder="e.g. Ancient Haunter"/></div>
+      <div><label>Count</label><select id="enc-ct"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
+      <div><label>Level</label><input id="enc-lv" type="number" value="1" min="1" max="20"/></div>
+    </div>
+    <div class="sp"><label>Motivation</label>
+      <select id="enc-mot">
+        <option value="territorial">Territorial — protecting their floor</option>
+        <option value="hungry">Hungry — desperate for food</option>
+        <option value="corrupted">Corrupted — dark energy twisted them</option>
+        <option value="guarding">Guarding — protecting something</option>
+        <option value="cursed">Cursed — under a dungeon spell</option>
+        <option value="ambush">Ambush — they were waiting for you</option>
+      </select>
+    </div>
+    <div class="flex sp">
+      <button class="btn btn-t btn-lg" onclick="startEncounter()">⚔ Start Encounter</button>
+    </div>
+    <div id="enc-status" style="font-size:11px;color:var(--dim);margin-top:6px;font-style:italic;min-height:1em"></div>
+  </div>
+  <!-- Active combat (hidden until started) -->
+  <div id="combat-active" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:5px;margin-bottom:7px">
+      <div style="font-family:system-ui;font-size:12px;font-weight:600;color:var(--gold)">Round <span id="round-num">1</span> — <span id="turn-lbl" style="color:var(--gold2)">—</span></div>
+      <div class="flex" style="gap:4px">
+        <button class="btn btn-g btn-sm" onclick="endWin()">Victory</button>
+        <button class="btn btn-r btn-sm" onclick="endFled()">Flee/Defeat</button>
+      </div>
+    </div>
+    <div class="arena"><div class="combatants" id="combatants"></div></div>
+    <div class="card" id="init-card" style="display:none">
+      <div class="chd">Initiative</div>
+      <div class="init-bar" id="init-bar"></div>
+      <div class="flex sp" style="gap:4px">
+        <button class="btn btn-t btn-sm" onclick="nextTurn()">Next Turn</button>
+        <button class="btn btn-sm" onclick="rerollInit()">Re-roll</button>
+      </div>
+    </div>
+    <!-- Player turn -->
+    <div class="card" id="player-card" style="display:none">
+      <div class="chd" id="player-card-title">Your Turn</div>
+      <div style="font-size:10px;color:var(--mid);letter-spacing:.07em;text-transform:uppercase;margin-bottom:3px">Main Action — Move</div>
+      <div class="mg" id="move-grid"></div>
+      <div style="font-size:10px;color:var(--amber);letter-spacing:.07em;text-transform:uppercase;margin-top:8px;margin-bottom:4px">Bonus Action — Command Companion <span style="color:var(--dim);font-size:9px;text-transform:none">(poke5e: 1 per turn)</span></div>
+      <select id="cmd-sel" style="font-size:11px;padding:3px 7px;width:auto;margin-bottom:5px" onchange="renderCmdGrid()">
+        <option value="">— Select companion —</option>
+      </select>
+      <div class="cmd-grid" id="cmd-grid"></div>
+      <div class="flex sp" style="gap:4px;flex-wrap:wrap">
+        <button class="btn btn-sm btn-g" onclick="useBagItem()">Use Item</button>
+        <button class="btn btn-sm" onclick="doFlee()">Flee</button>
+        <button class="btn btn-sm" onclick="doWait()">Wait</button>
+      </div>
+    </div>
+    <!-- Enemy turn -->
+    <div class="card" id="enemy-card" style="display:none">
+      <div class="chd" id="enemy-card-title">Enemy Turn</div>
+      <button class="btn btn-t" onclick="resolveEnemy()">Resolve Action</button>
+    </div>
+    <!-- Companion turn -->
+    <div class="card" id="comp-card" style="display:none">
+      <div class="chd" id="comp-card-title">Companion Turn</div>
+      <div id="comp-detail" style="font-size:12px;color:var(--dim);margin-bottom:7px;font-style:italic"></div>
+      <button class="btn btn-t" onclick="resolveCompanion()">Resolve Action</button>
+    </div>
+    <!-- Combat log -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+        <div class="chd" style="margin:0;border:none;padding:0">Battle Log</div>
+        <button class="btn btn-sm" onclick="document.getElementById('clog').innerHTML='<p class=cl-sys>Cleared.</p>'">Clear</button>
+      </div>
+      <div class="clog" id="clog"><p class="cl-sys">No combat yet.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MOVES ═══ -->
+<div class="pnl" id="p-moves">
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:5px;margin-bottom:7px">
+      <div class="chd" style="margin:0;border:none;padding:0">Known Moves (max 4)</div>
+      <div class="flex" style="gap:4px">
+        <button class="btn btn-g btn-sm" onclick="restAll()">Rest (restore all)</button>
+        <button class="btn btn-t btn-sm" onclick="addMove()">+ Add</button>
+      </div>
+    </div>
+    <div id="moves-list"><div class="empty">No moves. Load a character to auto-populate.</div></div>
+  </div>
+  <div class="card" id="move-form" style="display:none">
+    <div class="chd">Add / Edit Move</div>
+    <div class="g2">
+      <div><label>Name</label><input id="m-name" placeholder="e.g. Flamethrower"/></div>
+      <div><label>Type</label><select id="m-type"><option>Normal</option><option>Fire</option><option>Water</option><option>Grass</option><option>Electric</option><option>Ice</option><option>Fighting</option><option>Poison</option><option>Ground</option><option>Flying</option><option>Psychic</option><option>Bug</option><option>Rock</option><option>Ghost</option><option>Dark</option><option>Dragon</option><option>Steel</option><option>Fairy</option></select></div>
+      <div><label>Category</label><select id="m-cat"><option>Physical</option><option>Special</option><option>Status</option></select></div>
+      <div><label>Damage</label><input id="m-dmg" placeholder="e.g. 2d6+3"/></div>
+      <div><label>Range</label><input id="m-range" placeholder="e.g. 30ft"/></div>
+      <div><label>Save/Attack</label><input id="m-save" placeholder="e.g. DC14 DEX"/></div>
+      <div><label>PP</label><input id="m-pp" type="number" placeholder="5"/></div>
+      <div><label>PP Max</label><input id="m-ppmax" type="number" placeholder="5"/></div>
+    </div>
+    <div class="sp"><label>Description</label><textarea id="m-desc" placeholder="Effect…"></textarea></div>
+    <div class="flex sp">
+      <button class="btn btn-t" onclick="saveMove()">Save</button>
+      <button class="btn" onclick="cancelMove()">Cancel</button>
+    </div>
+  </div>
+  <!-- Forgotten moves -->
+  <div class="card" id="forgotten-card" style="display:none">
+    <div class="chd">Forgotten Moves</div>
+    <div id="forgotten-list"></div>
+    <div style="font-size:11px;color:var(--dim);margin-top:5px">Use a <strong style="color:var(--gold)">Heart Scale</strong> from your bag to relearn one.</div>
+  </div>
+  <!-- TM Use -->
+  <div class="card">
+    <div class="chd">Use a TM</div>
+    <p style="font-size:12px;color:var(--dim);margin-bottom:8px;line-height:1.5">TMs teach compatible moves permanently. Consumes the TM from your bag. PokéAPI verifies compatibility automatically.</p>
+    <div class="g2">
+      <div><label>TM Move Name</label><input id="tm-move" placeholder="e.g. Thunderbolt" oninput="checkTMCompat()"/></div>
+      <div><label>Species</label><input id="tm-sp" placeholder="auto-filled"/></div>
+    </div>
+    <div id="tm-compat" style="margin-top:5px;font-size:12px;min-height:1.2em"></div>
+    <div class="flex sp">
+      <button class="btn btn-t" onclick="useTM()" id="tm-btn" disabled>Apply TM</button>
+    </div>
+    <div id="tm-status" style="font-size:11px;color:var(--dim);margin-top:4px;font-style:italic;min-height:1em"></div>
+  </div>
+  <!-- Heart Scale -->
+  <div class="card">
+    <div class="chd">Heart Scale — Move Relearner</div>
+    <p style="font-size:12px;color:var(--dim);margin-bottom:8px;line-height:1.5">Relearn a forgotten move. Requires a Heart Scale in your bag.</p>
+    <button class="btn btn-p" onclick="useHeartScale()">Use Heart Scale</button>
+    <div id="hs-status" style="font-size:11px;color:var(--dim);margin-top:4px;font-style:italic;min-height:1em"></div>
+  </div>
+</div>
+
+<!-- ═══ SKILLS ═══ -->
+<div class="pnl" id="p-skills">
+  <div class="card">
+    <div class="chd">Skills — click dot to toggle proficiency · Roll to make a check</div>
+    <div class="sk-grid" id="sk-grid"></div>
+  </div>
+  <div class="card">
+    <div class="chd">Saving Throw Proficiencies</div>
+    <div class="g6">
+      <div class="sbox" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 2px"><div class="sl">STR</div><div class="sk-dot" id="stp-str" onclick="toggleSTP('str')" style="cursor:pointer"></div></div>
+      <div class="sbox" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 2px"><div class="sl">DEX</div><div class="sk-dot" id="stp-dex" onclick="toggleSTP('dex')" style="cursor:pointer"></div></div>
+      <div class="sbox" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 2px"><div class="sl">CON</div><div class="sk-dot" id="stp-con" onclick="toggleSTP('con')" style="cursor:pointer"></div></div>
+      <div class="sbox" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 2px"><div class="sl">INT</div><div class="sk-dot" id="stp-int" onclick="toggleSTP('int')" style="cursor:pointer"></div></div>
+      <div class="sbox" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 2px"><div class="sl">WIS</div><div class="sk-dot" id="stp-wis" onclick="toggleSTP('wis')" style="cursor:pointer"></div></div>
+      <div class="sbox" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 2px"><div class="sl">CHA</div><div class="sk-dot" id="stp-cha" onclick="toggleSTP('cha')" style="cursor:pointer"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ BAG ═══ -->
+<div class="pnl" id="p-bag">
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">
+      <div class="chd" style="margin:0;border:none;padding:0">Bag</div>
+      <button class="btn btn-t btn-sm" onclick="addItem()">+ Add</button>
+    </div>
+    <div id="inv-list"><div class="empty">Bag is empty.</div></div>
+  </div>
+  <div class="card" id="item-form" style="display:none">
+    <div class="chd">New Item</div>
+    <div class="g2">
+      <div><label>Name</label><input id="i-name" placeholder="e.g. Oran Berry"/></div>
+      <div><label>Qty</label><input id="i-qty" type="number" value="1" min="1"/></div>
+    </div>
+    <div class="sp"><label>Effect</label><textarea id="i-desc" placeholder="What does it do?"></textarea></div>
+    <div class="flex sp">
+      <button class="btn btn-t" onclick="saveItem()">Add</button>
+      <button class="btn" onclick="document.getElementById('item-form').style.display='none'">Cancel</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="chd">Resources</div>
+    <div class="g3">
+      <div><label>Poké</label><input id="r-gold" type="number" value="100" oninput="saveChar()"/></div>
+      <div><label>Rescue Pts</label><input id="r-rp" type="number" value="0" oninput="saveChar()"/></div>
+      <div><label>Wonder Orbs</label><input id="r-orbs" type="number" value="0" oninput="saveChar()"/></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SETUP ═══ -->
+<div class="pnl" id="p-setup">
+  <div class="card">
+    <div class="chd">Campaign — Mew's Manor</div>
+    <label>Dungeon Name</label><input id="s-name" value="Mew's Manor" oninput="saveSett()"/>
+    <div class="sp"><label>Setting / World</label><textarea id="s-set" rows="2" oninput="saveSett()">An ancient manor that appears decrepit and foreboding on the outside. Inside, it is impossibly alive — a warm hub Pokémon have made their home. Every room is a portal to a vast and different world.</textarea></div>
+    <div class="sp"><label>Current Goal</label><textarea id="s-goal" rows="2" placeholder="e.g. Find what sleeps in the manor's deepest room." oninput="saveSett()"></textarea></div>
+    <div class="sp"><label>DM Style</label>
+      <select id="s-style" oninput="saveSett()">
+        <option value="epic">Epic &amp; Dramatic</option>
+        <option value="gritty">Gritty &amp; Dark</option>
+        <option value="light">Lighthearted &amp; Fun</option>
+        <option value="mystery">Mysterious &amp; Foreboding</option>
+      </select>
+    </div>
+  </div>
+  <div class="card">
+    <div class="chd">Memory &amp; Story</div>
+    <p style="font-size:12px;color:var(--dim);line-height:1.6">The DM remembers your last <strong style="color:var(--teal)">30 exchanges</strong>. Older events are auto-summarized so nothing important is lost.</p>
+    <div style="font-size:11px;color:var(--dim);margin-top:5px">Memory: <span id="mem-ct" style="color:var(--gold)">0</span> exchanges</div>
+    <button class="btn btn-r btn-sm" style="margin-top:7px" onclick="if(confirm('Clear story and memory?')){S.hist=[];S.summary='';save();renderLog()}">Clear Story</button>
+  </div>
+  <div class="card">
+    <div class="chd">API Key</div>
+    <p style="font-size:12px;color:var(--dim);line-height:1.6;margin-bottom:7px">Stored in this browser only. Change to use on a different device.</p>
+    <div style="display:flex;gap:5px;flex-wrap:wrap">
+      <button class="btn btn-sm" onclick="showKeyGate()">Change API Key</button>
+      <button class="btn btn-sm btn-t" onclick="testAPIKey()">Test Key</button>
+    </div>
+    <div id="key-test-result" style="font-size:11px;margin-top:6px;min-height:1em"></div>
+  </div>
+  <div class="card">
+    <div class="chd">poke5e Level Thresholds</div>
+    <p style="font-size:12px;color:var(--dim);line-height:1.6">Lv1→2: 300 XP · Lv2→3: 600 · Lv3→4: 1200 · Lv4→5: 2100 · +1000 each level after. Combat XP = enemy level × 25 per enemy.</p>
+  </div>
+</div>
+
+</div><!-- /panels -->
+<script>
+// ═══════════════ CONSTANTS ═══════════════
+const POKEAPI='https://pokeapi.co/api/v2';
+const PMD='https://raw.githubusercontent.com/PMDCollab/SpriteCollab/master/portrait';
+const API_URL='https://api.anthropic.com/v1/messages';
+const MDL='claude-sonnet-4-6';
+const MAX_HIST=26;
+const XP_TABLE=[0,300,900,2100,3300,4800,6600,8700,11100,13800,16800,20100,23700,27600,31800,36300,41100,46200,51600,57300];
+
+const CONDS=['Blinded','Charmed','Deafened','Exhaustion','Frightened','Grappled','Incapacitated','Invisible','Paralyzed','Petrified','Poisoned','Prone','Restrained','Stunned','Burned','Frozen','Confused','Asleep'];
+const SKILLS=[{n:'Acrobatics',a:'Acrobatics',s:'dex'},{n:'Animal Handling',a:'AnimalHandling',s:'wis'},{n:'Arcana',a:'Arcana',s:'int'},{n:'Athletics',a:'Athletics',s:'str'},{n:'Deception',a:'Deception',s:'cha'},{n:'History',a:'History',s:'int'},{n:'Insight',a:'Insight',s:'wis'},{n:'Intimidation',a:'Intimidation',s:'cha'},{n:'Investigation',a:'Investigation',s:'int'},{n:'Medicine',a:'Medicine',s:'wis'},{n:'Nature',a:'Nature',s:'int'},{n:'Perception',a:'Perception',s:'wis'},{n:'Performance',a:'Performance',s:'cha'},{n:'Persuasion',a:'Persuasion',s:'cha'},{n:'Sleight of Hand',a:'SleightOfHand',s:'dex'},{n:'Stealth',a:'Stealth',s:'dex'},{n:'Survival',a:'Survival',s:'wis'},{n:'Nature Lore',a:'NatureLore',s:'int'}];
+const ARCHETYPES=[{r:'The Protector',t:"stands guard so others don't have to"},{r:'The Wanderer',t:'searching for something lost long ago'},{r:'The Scholar',t:'chases knowledge into dangerous places'},{r:'The Outcast',t:'has nowhere else left to go'},{r:'The Optimist',t:'believes everything will work out'},{r:'The Cynic',t:'expects the worst and plans for it'},{r:'The Haunted',t:'carries wounds that never fully healed'},{r:'The Loyal',t:'fights for the one who believed in them'},{r:'The Reckless',t:'leaps before looking every time'},{r:'The Gentle',t:'hates fighting but loves protecting'},{r:'The Ambitious',t:'wants to prove something to the world'},{r:'The Mysterious',t:'reveals little and observes everything'}];
+const POOL=[1,4,7,25,35,39,52,54,56,58,63,66,74,79,81,84,86,88,92,96,102,104,108,113,115,116,120,122,124,126,128,131,133,137,143,147,152,155,158,175,177,179,183,187,194,196,197,199,203,206,209,215,218,220,222,225,227,231,234,238,246,252,255,258,280,285,287,290,293,298,300,302,311,312,316,320,322,325,327,333,349,352,355,360,363,371];
+const EMOS=['Normal','Happy','Pain','Angry','Worried','Sad','Determined','Joyous','Surprised'];
+
+const WEATHER_TYPES=[
+  {id:'clear',name:'Clear',icon:'☀️',effect:'No special effects.'},
+  {id:'fog',name:'Foggy',icon:'🌫️',effect:'Perception checks have Disadvantage. Ranged attacks beyond 30ft miss automatically.'},
+  {id:'stormy',name:'Stormy',icon:'⛈️',effect:'Electric moves Super Effective vs all. Flying Pokémon make DC12 STR or are grounded.'},
+  {id:'blizzard',name:'Blizzard',icon:'❄️',effect:'Non-Ice Pokémon take 1d4 cold at end of turn. Ice moves deal +1d4 bonus.'},
+  {id:'sunny',name:'Harsh Sun',icon:'🌞',effect:'Fire moves +1d6 damage. Water moves −2 damage.'},
+  {id:'rain',name:'Heavy Rain',icon:'🌧️',effect:'Water moves +1d6 damage. Fire moves −2 damage.'},
+  {id:'windy',name:'Gusty Wind',icon:'💨',effect:'Flying moves have Advantage. Ground moves cannot be used.'},
+  {id:'dark',name:'Total Darkness',icon:'🌑',effect:'Attacks have Disadvantage without Darkvision. Stealth checks have Advantage.'},
+];
+
+const LOCATIONS={
+  hub:{id:'hub',name:'The Living Room',icon:'🏠',color:'#d4a017',type:'hub',desc:'The warm impossible heart of Mew\'s Manor.',svgX:130,svgY:150,unlocked:true},
+  library:{id:'library',name:'The Library',icon:'📚',color:'#00b8d0',type:'dungeon',biome:'Ancient Library',biomeEmoji:'📚',desc:'Shelves rise beyond what should be possible. Somewhere deep in the stacks, something reads.',floors:10,floorThemes:['Dusty entrance hall — shelves of forgotten tomes','Reading rooms lit by floating glyphs','The Catalogue — endless rows of whispering books','Restricted Section — iron cages, forbidden knowledge','The Living Index — books that move on their own','Deep Archives — floors of pure parchment and ink','The Scriptorium — scribes who never stop writing','Vault of Lost Languages — nothing is readable','The Author\'s Chamber — someone is still writing','THE FINAL CHAPTER — boss floor'],enemies:['Unown','Sigilyph','Gothita','Inkay','Ralts','Abra','Kadabra'],bossHint:'Something ancient guards the final manuscript',svgX:130,svgY:79,unlocked:true},
+  cellar:{id:'cellar',name:'The Cellar',icon:'🍷',color:'#8040c8',type:'dungeon',biome:'Haunted Cellar',biomeEmoji:'🍷',desc:'Stone steps descend into cool darkness. Far below, a faint purple light pulses like a heartbeat.',floors:8,floorThemes:['Stone cellar entrance, broken barrels','Wine racks stretching impossibly far','The Fermentation Caves — something grew here','Catacombs — old bones, new shadows','The Flooded Passage — knee-deep in black water','Root Maze — the manor\'s roots go very deep','The Burial Chamber — flowers bloom on stone','THE UNCORKED — boss floor'],enemies:['Gastly','Haunter','Misdreavus','Phantump','Duskull','Yamask','Drifloon'],bossHint:'Whatever is buried here has been waiting a long time',svgX:130,svgY:249,unlocked:true},
+  left:{id:'left',name:'???',icon:'🔒',color:'#1a2840',type:'dungeon',unlocked:false,svgX:43,svgY:150,unlockHint:'Reach Library floor 5 to open this door.',floors:12},
+  right:{id:'right',name:'???',icon:'🔒',color:'#1a2840',type:'dungeon',unlocked:false,svgX:217,svgY:150,unlockHint:'Complete a quest from the notice board.',floors:10},
+  tl:{id:'tl',name:'???',icon:'🔒',color:'#1a2840',type:'dungeon',unlocked:false,svgX:42,svgY:68,unlockHint:'Clear the Cellar completely.',floors:15},
+  tr:{id:'tr',name:'???',icon:'🔒',color:'#1a2840',type:'dungeon',unlocked:false,svgX:218,svgY:68,unlockHint:'Reach bond 75 with any companion.',floors:8},
+  bl:{id:'bl',name:'???',icon:'🔒',color:'#1a2840',type:'dungeon',unlocked:false,svgX:42,svgY:251,unlockHint:'Reach floor 5 of any dungeon.',floors:20},
+  br:{id:'br',name:'???',icon:'🔒',color:'#1a2840',type:'dungeon',unlocked:false,svgX:218,svgY:251,unlockHint:'Find the Manor Key hidden in the Cellar.',floors:10},
+};
+
+const HUB_NPCS=[
+  {id:'wigglytuff',name:'Wigglytuff',role:'Guild Master · Always cheerful',line:'"FRIEND! You are just in time. The Manor needs brave hearts today! Yes, yes!"',dexId:40,portraitUrl:null},
+  {id:'duskull',name:'Duskull',role:'Shopkeeper · Ancient, soft-spoken',line:'"…Take what you need. I\'ve been here longer than the walls."',dexId:355,portraitUrl:null},
+  {id:'ampharos',name:'Ampharos',role:'Notice Board · Organized, gentle',line:'"I keep the quests. Every request matters — no mission too small."',dexId:181,portraitUrl:null},
+];
+
+const SHOP_ITEMS=[
+  {name:'Oran Berry',desc:'Restores 10 HP.',price:50},
+  {name:'Sitrus Berry',desc:'Restores 25% max HP.',price:200},
+  {name:'Pecha Berry',desc:'Cures Poisoned.',price:80},
+  {name:'Rawst Berry',desc:'Cures Burned.',price:80},
+  {name:'Cheri Berry',desc:'Cures Paralyzed.',price:80},
+  {name:'Aspear Berry',desc:'Cures Frozen.',price:80},
+  {name:'Ether',desc:'Restores 10 PP to one move.',price:150},
+  {name:'Elixir',desc:'Restores all PP.',price:400},
+  {name:'Reviver Seed',desc:'Auto-revive on faint.',price:600},
+  {name:'Escape Orb',desc:'Instantly exit a dungeon.',price:120},
+  {name:'Blast Seed',desc:'Throw for 40 Fire damage.',price:90},
+  {name:'Heart Scale',desc:'Relearn one forgotten move.',price:300},
+  {name:'TM Thunder Wave',desc:'Teach Thunder Wave.',price:500},
+  {name:'TM Flamethrower',desc:'Teach Flamethrower.',price:800},
+  {name:'TM Ice Beam',desc:'Teach Ice Beam.',price:800},
+  {name:'TM Shadow Ball',desc:'Teach Shadow Ball.',price:700},
+];
+
+const QUESTS=[
+  {id:'q1',title:'Lost in the Stacks',desc:'A Ralts got separated in The Library. Find them on floor 3.',reward:{gold:200,item:'Ether',xp:150,unlock:null},location:'library',targetFloor:3},
+  {id:'q2',title:'Strange Sounds Below',desc:'Residents hear crying from deep in The Cellar. Investigate floors 4-5.',reward:{gold:300,item:'Rawst Berry',xp:200,unlock:'right'},location:'cellar',targetFloor:4},
+  {id:'q3',title:'The Missing Volume',desc:'Duskull needs "The Encyclopedia of Doors" from Library floor 7.',reward:{gold:400,item:'Heart Scale',xp:300,unlock:null},location:'library',targetFloor:7},
+];
+
+// ═══════════════ STATE ═══════════════
+let S={
+  char:{name:'',species:'',types:'',level:1,xp:0,hpCur:10,hpMax:10,hpTmp:0,ac:12,speed:30,prof:2,init:'+0',hd:'d8',str:10,dex:10,con:10,int:10,wis:10,cha:10,sr:'1',ability:'',notes:'',conditions:{},stProf:{str:false,dex:false,con:false,int:false,wis:false,cha:false},skillProf:{},dexId:null,dexSlug:null,portraitUrl:null,emotion:'Normal'},
+  moves:[],forgottenMoves:[],inventory:[],companions:[],
+  hist:[],summary:'',
+  settings:{name:"Mew's Manor",set:"An ancient manor that appears decrepit outside but is impossibly alive within. Every room is a portal to a different world.",goal:'',style:'mystery'},
+  res:{gold:100,rp:0,orbs:0},
+  map:{currentLoc:'hub',locStatus:{},floorProgress:{},floorEvents:{},unlockedRooms:['hub','library','cellar']},
+  quests:{}
+};
+
+function save(){try{localStorage.setItem('mdc_v2',JSON.stringify(S));}catch(e){}}
+function load(){try{const d=localStorage.getItem('mdc_v2');if(d){const p=JSON.parse(d);S=Object.assign({},S,p);}}catch(e){}}
+
+// ═══════════════ API KEY ═══════════════
+function getKey(){return localStorage.getItem('mdc_key')||'';}
+function saveKey(){
+  const k=document.getElementById('key-input').value.trim();
+  const err=document.getElementById('key-err');
+  if(!k||!k.startsWith('sk-')){err.textContent='Key should start with sk-ant…';return;}
+  err.textContent='';localStorage.setItem('mdc_key',k);
+  document.getElementById('key-gate').style.display='none';
+}
+function skipKey(){document.getElementById('key-gate').style.display='none';}
+function showKeyGate(){document.getElementById('key-input').value=getKey();document.getElementById('key-err').textContent='';document.getElementById('key-gate').style.display='flex';}
+document.getElementById('key-input').addEventListener('keydown',e=>{if(e.key==='Enter')saveKey();});
+function H(){return{'Content-Type':'application/json','anthropic-version':'2023-06-01','x-api-key':getKey(),'anthropic-dangerous-direct-browser-access':true};}
+
+// ═══════════════ HELPERS ═══════════════
+const esc=s=>s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):'';
+const fmod=m=>m>=0?'+'+m:''+m;
+const mmod=s=>Math.floor(((s||10)-10)/2);
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const pickN=(a,n)=>[...a].sort(()=>Math.random()-.5).slice(0,n);
+function rollD(n){return Math.ceil(Math.random()*n);}
+function rollExpr(expr){if(!expr||expr==='—'||expr==='Status'||expr==='Self')return 0;const m=String(expr).match(/^(\d+)d(\d+)(?:[+](\d+))?/i);if(!m)return parseInt(expr)||0;let t=0;for(let i=0;i<parseInt(m[1]);i++)t+=rollD(parseInt(m[2]));if(m[3])t+=parseInt(m[3]);return t;}
+function slugify(s){return s.toLowerCase().trim().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');}
+async function tryImg(url){return new Promise(r=>{const i=new Image();i.onload=()=>r(url);i.onerror=()=>r(null);i.src=url;});}
+async function findPortrait(id,em='Normal'){const pad=String(id).padStart(4,'0');let u=await tryImg(`${PMD}/${pad}/${em}.png`);if(u)return u;for(const e of['Normal','Happy','Determined']){if(e===em)continue;u=await tryImg(`${PMD}/${pad}/${e}.png`);if(u)return u;}return null;}
+
+// ═══════════════ NAV ═══════════════
+function goTab(id){
+  document.querySelectorAll('.pnl').forEach(p=>p.classList.remove('act'));
+  document.querySelectorAll('.ntab').forEach(b=>b.classList.remove('act'));
+  document.getElementById('p-'+id).classList.add('act');
+  const idx={story:0,char:1,party:2,map:3,combat:4,moves:5,skills:6,bag:7,setup:8}[id];
+  if(idx!==undefined)document.querySelectorAll('.ntab')[idx].classList.add('act');
+  if(id==='moves')renderMovesMgr();
+  if(id==='map'){renderLocList();if(S.map.currentLoc==='hub')renderHubPanel();else{const loc=LOCATIONS[S.map.currentLoc];if(loc)renderDungeonPanel(loc);}}
+}
+document.getElementById('pinput').addEventListener('keydown',e=>{if(e.ctrlKey&&e.key==='Enter'){e.preventDefault();takeAct();}});
+
+// ═══════════════ AUTOCOMPLETE ═══════════════
+let acNames=[],acRes=[],acSel=-1,acT=null;
+async function loadAcNames(){if(acNames.length)return;try{const r=await fetch(`${POKEAPI}/pokemon?limit=1025`);const d=await r.json();acNames=d.results.map(p=>p.name);}catch(e){}}
+function acSearch(v){
+  clearTimeout(acT);const list=document.getElementById('ac-list');
+  if(!v||v.length<2){list.classList.remove('open');return;}
+  acT=setTimeout(()=>{const q=v.toLowerCase().replace(/\s+/g,'-').replace(/[.']/g,'');acRes=acNames.filter(n=>n.startsWith(q)||n.includes(q)).slice(0,8);acSel=-1;list.innerHTML='';if(!acRes.length){list.classList.remove('open');return;}acRes.forEach((n,i)=>{const d=document.createElement('div');d.className='ac-item';d.textContent=n.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());d.onclick=()=>acPick(n);list.appendChild(d);});list.classList.add('open');},160);
+}
+function acNav(e){const list=document.getElementById('ac-list');const items=list.querySelectorAll('.ac-item');if(!items.length)return;if(e.key==='ArrowDown'){e.preventDefault();acSel=Math.min(acSel+1,items.length-1);}else if(e.key==='ArrowUp'){e.preventDefault();acSel=Math.max(acSel-1,0);}else if(e.key==='Enter'){e.preventDefault();if(acSel>=0)acPick(acRes[acSel]);else{const v=document.getElementById('c-sp-inp').value;if(v)loadSpecies(v.toLowerCase().replace(/\s+/g,'-').replace(/[.']/g,''));}}else if(e.key==='Escape'){list.classList.remove('open');return;}items.forEach((el,i)=>el.classList.toggle('sel',i===acSel));if(acSel>=0)items[acSel].scrollIntoView({block:'nearest'});}
+function acPick(name){document.getElementById('c-sp-inp').value=name.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());document.getElementById('ac-list').classList.remove('open');loadSpecies(name);}
+document.addEventListener('click',e=>{if(!e.target.closest('.ac-wrap'))document.getElementById('ac-list').classList.remove('open');});
+
+// ═══════════════ POKE5E ENGINE ═══════════════
+function b2s(b){return Math.max(4,Math.min(20,Math.round(b*20/255)+3));}
+function calcAC(def,spd2,spd){return Math.max(10,Math.min(18,Math.round(8+(def+spd2*.5+spd*.5)/2/25)));}
+function calcSpd(s){return 25+Math.floor(s/10)*5;}
+function calcHD(bst){return bst>=500?'d10':bst>=380?'d8':'d6';}
+function calcMaxHp(hd,con,level){const hn=parseInt(hd.replace('d',''));return hn+mmod(con)+Math.max(0,(level-1)*(Math.floor(hn/2)+mmod(con)));}
+function calcSR(bst){if(bst<250)return'1/4';if(bst<320)return'1/2';if(bst<400)return'1';if(bst<460)return'2';if(bst<500)return'3';if(bst<540)return'4';if(bst<580)return'5';return'6+';}
+function calcProf(lv){return Math.max(2,2+Math.floor((lv-1)/4));}
+
+async function loadSpecies(slug){
+  const st=document.getElementById('sp-status');st.textContent='Loading…';
+  try{
+    const r=await fetch(`${POKEAPI}/pokemon/${slug}`);if(!r.ok)throw new Error(`"${slug}" not found`);
+    const d=await r.json();
+    const gs=n=>d.stats.find(s=>s.stat.name===n)?.base_stat||50;
+    const atk=gs('attack'),def=gs('defense'),spa=gs('special-attack'),spd2=gs('special-defense'),spd=gs('speed'),hp=gs('hp');
+    const bst=atk+def+spa+spd2+spd+hp;
+    const lv=S.char.level||1;
+    const sc={str:b2s(atk),dex:b2s(spd),con:b2s(hp),int:b2s(spa),wis:b2s(spd2),cha:b2s(def)};
+    const hd=calcHD(bst),ac=calcAC(def,spd2,spd),speed=calcSpd(spd),maxHp=calcMaxHp(hd,sc.con,lv),prof=calcProf(lv);
+    const types=d.types.map(t=>t.type.name.replace(/\b\w/g,c=>c.toUpperCase())).join('/');
+    const ab=(d.abilities.find(a=>!a.is_hidden)||d.abilities[0])?.ability.name.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase())||'—';
+    const sname=slug.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+    let moveSlugs=d.moves.filter(m=>m.version_group_details.some(v=>v.move_learn_method.name==='level-up'&&v.level_learned_at<=1)).map(m=>m.move.name).slice(0,4);
+    if(!moveSlugs.length)moveSlugs=d.moves.filter(m=>m.version_group_details.some(v=>v.move_learn_method.name==='level-up')).sort((a,b)=>{const la=Math.min(...a.version_group_details.filter(v=>v.move_learn_method.name==='level-up').map(v=>v.level_learned_at));const lb=Math.min(...b.version_group_details.filter(v=>v.move_learn_method.name==='level-up').map(v=>v.level_learned_at));return la-lb;}).slice(0,2).map(m=>m.move.name);
+    Object.assign(S.char,{species:sname,types,str:sc.str,dex:sc.dex,con:sc.con,int:sc.int,wis:sc.wis,cha:sc.cha,ac,speed,hd,hpMax:maxHp,hpCur:maxHp,prof,init:fmod(mmod(sc.dex)),sr:calcSR(bst),ability:ab,dexId:d.id,dexSlug:slug,emotion:'Normal'});
+    if(S.moves.length===0&&moveSlugs.length){
+      st.textContent='Loading moves…';
+      const mds=await Promise.allSettled(moveSlugs.map(n=>fetch(`${POKEAPI}/move/${n}`).then(r=>r.ok?r.json():null).catch(()=>null)));
+      S.moves=moveSlugs.map((mn,i)=>{const md=mds[i].status==='fulfilled'?mds[i].value:null;const pwr=md?.power,pp=Math.min(md?.pp||5,20);const mt=md?.type?.name?md.type.name.replace(/\b\w/g,c=>c.toUpperCase()):'Normal';const cat=md?.damage_class?.name==='physical'?'Physical':md?.damage_class?.name==='special'?'Special':'Status';const dmg=pwr?(pwr<=40?'1d6':pwr<=60?'1d8':pwr<=80?'2d6':pwr<=100?'2d8':'3d6'):'—';const acc=md?.accuracy;return{name:mn.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase()),type:mt,cat,dmg,range:cat==='Status'?'Self':'30ft',save:acc?`DC${10+Math.round((100-acc)/10)}`:'—',pp,ppmax:pp,desc:md?.flavor_text_entries?.find(f=>f.language.name==='en')?.flavor_text?.replace(/\f/g,' ')||''};});
+    }
+    save();applySheet();
+    st.textContent='Loading portrait…';
+    S.char.portraitUrl=await findPortrait(d.id,'Normal');
+    save();applyPortrait();updatePartyBar();updateHdrStats();
+    st.textContent='Done!';setTimeout(()=>st.textContent='',3000);
+    const tsp=document.getElementById('tm-sp');if(tsp)tsp.value=sname;
+  }catch(err){st.textContent='Error: '+err.message;}
+}
+
+function applySheet(){
+  const c=S.char;
+  document.getElementById('sp-card').style.display='none';
+  document.getElementById('char-loaded').style.display='block';
+  document.getElementById('c-name').value=c.name||'';
+  document.getElementById('c-dname').textContent=c.name||c.species;
+  document.getElementById('c-dsub').textContent=`${c.species} · ${c.types} · Level ${c.level}`;
+  document.getElementById('c-hpcur').value=c.hpCur;document.getElementById('c-hptmp').value=c.hpTmp||0;
+  document.getElementById('c-hpmax').textContent=c.hpMax;
+  ['ac','spd','hd','mhp','init'].forEach((k,i)=>{const el=document.getElementById('d-'+k);if(el)el.textContent=[c.ac,c.speed,c.hd,c.hpMax,c.init][i];});
+  document.getElementById('d-prof').textContent='+'+c.prof;
+  document.getElementById('d-sp').textContent=c.species;document.getElementById('d-sr').textContent=c.sr;document.getElementById('d-ab').textContent=c.ability;
+  document.getElementById('d-types').innerHTML=(c.types||'').split('/').map(t=>`<span class="tbadge t-${t.trim().toLowerCase()}">${t.trim()}</span>`).join(' ');
+  ['str','dex','con','int','wis','cha'].forEach(s=>{const v=c[s]||10,m=mmod(v);['d-','m-','st-'].forEach((p,i)=>{const el=document.getElementById(p+s);if(!el)return;if(i===0)el.textContent=v;else if(i===1)el.textContent=fmod(m);else el.textContent=fmod(m+(c.stProf[s]?c.prof:0));});});
+  const no=document.getElementById('c-notes');if(no)no.value=c.notes||'';
+  updateHPUI();updateXPUI();renderConds();renderSkills();renderMoves();renderEmoRow();
+}
+function applyPortrait(){
+  const w=document.getElementById('c-portrait');if(w&&S.char.portraitUrl)w.innerHTML=`<img src="${S.char.portraitUrl}" style="width:88px;height:88px;image-rendering:pixelated" alt="portrait"/>`;
+  updatePartyBar();
+}
+function changeSpecies(){document.getElementById('sp-card').style.display='block';document.getElementById('char-loaded').style.display='none';}
+function renderEmoRow(){
+  const row=document.getElementById('c-emo-row');if(!row||!S.char.dexId)return;row.innerHTML='';
+  EMOS.forEach(em=>{const b=document.createElement('button');b.style.cssText='padding:1px 4px;border-radius:3px;border:1px solid var(--b1);background:transparent;color:var(--dim);font-size:9px;cursor:pointer;font-family:inherit';b.textContent=em;if(S.char.emotion===em)b.style.cssText+='border-color:var(--teal);color:var(--teal2)';b.onclick=async()=>{const u=await findPortrait(S.char.dexId,em);if(u){S.char.emotion=em;S.char.portraitUrl=u;save();applyPortrait();renderEmoRow();}};row.appendChild(b);});
+}
+
+function updateHPUI(){
+  const cur=S.char.hpCur||0,max=S.char.hpMax||1,pct=Math.max(0,Math.min(100,(cur/max)*100));
+  const col=pct>50?'var(--green)':pct>25?'var(--gold)':'var(--red)';
+  const bar=document.getElementById('c-hpbar');if(bar){bar.style.width=pct+'%';bar.style.background=col;}
+  const txt=document.getElementById('c-hptxt');if(txt)txt.textContent=`${cur} / ${max}`;
+  const cur2=document.getElementById('c-hpcur');if(cur2)cur2.value=cur;
+  const ppb=document.getElementById('pp-hp-bar');if(ppb){ppb.style.width=pct+'%';ppb.style.background=col;}
+}
+function updateXPUI(){
+  const c=S.char;const lv=Math.min(c.level,19);const xpNeeded=XP_TABLE[lv]||99999;const xpHave=c.xp||0;
+  const pct=Math.max(0,Math.min(100,(xpHave/xpNeeded)*100));
+  const bar=document.getElementById('c-xp-bar');if(bar)bar.style.width=pct+'%';
+  const txt=document.getElementById('c-xp-txt');if(txt)txt.textContent=`${xpHave} / ${xpNeeded} XP`;
+}
+function updateHdrStats(){
+  const c=S.char;
+  const hh=document.getElementById('hdr-hp');if(hh)hh.textContent=c.species?`${c.hpCur}/${c.hpMax}`:'—';
+  const hl=document.getElementById('hdr-lv');if(hl)hl.textContent=c.species?c.level:'—';
+  const hg=document.getElementById('hdr-gold');if(hg)hg.textContent=S.res.gold||0;
+}
+function saveHp(){const el=document.getElementById('c-hpcur');if(el)S.char.hpCur=parseInt(el.value)||0;updateHPUI();updateHdrStats();save();}
+function saveChar(){
+  const g=id=>document.getElementById(id);
+  if(g('c-name'))S.char.name=g('c-name').value;if(g('c-notes'))S.char.notes=g('c-notes').value;if(g('c-hptmp'))S.char.hpTmp=parseInt(g('c-hptmp').value)||0;
+  S.res.gold=parseInt(g('r-gold')?.value)||0;S.res.rp=parseInt(g('r-rp')?.value)||0;S.res.orbs=parseInt(g('r-orbs')?.value)||0;
+  updateHdrStats();save();
+}
+function saveCharName(){S.char.name=document.getElementById('c-name')?.value||'';const dn=document.getElementById('c-dname');if(dn)dn.textContent=S.char.name||S.char.species||'—';updatePartyBar();save();}
+function saveSett(){S.settings.name=document.getElementById('s-name')?.value||'';S.settings.set=document.getElementById('s-set')?.value||'';S.settings.goal=document.getElementById('s-goal')?.value||'';S.settings.style=document.getElementById('s-style')?.value||'mystery';save();}
+function doHpChange(sign){const a=prompt(sign>0?'Heal amount?':'Damage amount?');if(!a)return;const d=parseInt(a);if(!d||d<0)return;S.char.hpCur=Math.max(0,Math.min(S.char.hpMax,S.char.hpCur+(sign*d)));updateHPUI();updateHdrStats();save();addLog(sign>0?`<p class="sys">Healed ${d} HP — ${S.char.hpCur}/${S.char.hpMax}</p>`:`<p class="sys">Took ${d} damage — HP: ${S.char.hpCur}/${S.char.hpMax}</p>`);}
+
+// ═══════════════ LEVEL UP ═══════════════
+function grantXP(amount){
+  S.char.xp=(S.char.xp||0)+amount;
+  addLog(`<p class="bev">✨ +${amount} XP! (Total: ${S.char.xp})</p>`);
+  checkLevelUp();updateXPUI();save();
+}
+function addXP(){const a=prompt('Add XP:');const n=parseInt(a);if(n>0)grantXP(n);}
+
+function checkLevelUp(){
+  const c=S.char;let leveled=false;
+  while(c.level<20){
+    const needed=XP_TABLE[c.level];
+    if(!needed||(c.xp||0)<needed)break;
+    c.level++;leveled=true;
+    c.prof=calcProf(c.level);
+    if(c.dexSlug){
+      const ratio=c.hpMax>0?c.hpCur/c.hpMax:1;
+      c.hpMax=calcMaxHp(c.hd,c.con,c.level);
+      c.hpCur=Math.max(1,Math.floor(c.hpMax*ratio));
+    }
+  }
+  if(leveled)triggerLevelUp();
+}
+
+async function triggerLevelUp(){
+  const c=S.char;
+  let newMoves=[];
+  if(c.dexSlug){
+    try{
+      const r=await fetch(`${POKEAPI}/pokemon/${c.dexSlug}`);
+      if(r.ok){const d=await r.json();newMoves=d.moves.filter(m=>m.version_group_details.some(v=>v.move_learn_method.name==='level-up'&&v.level_learned_at===c.level)).map(m=>m.move.name.replace(/-/g,' ').replace(/\b\w/g,ch=>ch.toUpperCase()));}
+    }catch(e){}
+  }
+  addLog(`<p class="lvup">⭐ LEVEL UP! ${esc(c.name||c.species)} is now Level ${c.level}! Prof +${c.prof}. Max HP: ${c.hpMax}.${newMoves.length?' New move: '+newMoves.join(', '):''}</p>`);
+  const content=document.getElementById('lvup-content');
+  content.innerHTML=`<p style="font-size:14px;color:var(--gold2);margin-bottom:8px">${esc(c.name||c.species)} reached <strong>Level ${c.level}</strong>!</p>
+    <div class="g2" style="margin-bottom:10px">
+      <div class="sbox"><div class="sl">Prof Bonus</div><div class="sv">+${c.prof}</div></div>
+      <div class="sbox"><div class="sl">Max HP</div><div class="sv">${c.hpMax}</div></div>
+    </div>
+    ${newMoves.length?`<div><div style="font-size:11px;color:var(--gold);margin-bottom:5px;letter-spacing:.08em;text-transform:uppercase">New Move Available</div>${newMoves.map(mv=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:var(--bg);border:1px solid var(--b2);border-radius:5px;margin-bottom:4px"><span style="font-size:12px;font-weight:600">${esc(mv)}</span><button class="btn btn-t btn-sm" onclick="learnLvlMove('${mv}')">Learn</button></div>`).join('')}</div>`:'<p style="font-size:12px;color:var(--dim)">No new moves at this level.</p>'}`;
+  document.getElementById('lvup-modal').classList.add('open');
+  applySheet();updateHdrStats();save();
+}
+
+async function learnLvlMove(moveName){
+  const slug=slugify(moveName);
+  const md=await fetch(`${POKEAPI}/move/${slug}`).then(r=>r.ok?r.json():null).catch(()=>null);
+  const pwr=md?.power,pp=Math.min(md?.pp||5,20);
+  const mt=md?.type?.name?md.type.name.replace(/\b\w/g,c=>c.toUpperCase()):'Normal';
+  const cat=md?.damage_class?.name==='physical'?'Physical':md?.damage_class?.name==='special'?'Special':'Status';
+  const dmg=pwr?(pwr<=40?'1d6':pwr<=60?'1d8':pwr<=80?'2d6':pwr<=100?'2d8':'3d6'):'—';
+  const acc=md?.accuracy;
+  const newMove={name:moveName,type:mt,cat,dmg,pp,ppmax:pp,range:cat==='Status'?'Self':'30ft',save:acc?`DC${10+Math.round((100-acc)/10)}`:'—',desc:md?.flavor_text_entries?.find(f=>f.language.name==='en')?.flavor_text?.replace(/\f/g,' ')||''};
+  if(S.moves.length>=4)openLearnModal(newMove);
+  else{S.moves.push(newMove);save();renderMoves();addLog(`<p class="sys">Learned ${esc(moveName)}!</p>`);}
+}
+function closeLvUp(){document.getElementById('lvup-modal').classList.remove('open');}
+
+// ═══════════════ MOVE LEARN MODAL ═══════════════
+let pendingLearnMv=null;
+function openLearnModal(newMove){
+  pendingLearnMv=newMove;
+  document.getElementById('learn-new-prev').innerHTML=`<div style="font-size:10px;color:var(--green2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px">New Move</div><div style="font-size:13px;font-weight:600">${esc(newMove.name)}</div><div style="font-size:11px;color:var(--dim)">${newMove.type} · ${newMove.cat} · ${newMove.dmg||'Status'} · ${newMove.ppmax} PP</div>`;
+  const slots=document.getElementById('learn-forget-slots');slots.innerHTML='';
+  S.moves.forEach((mv,i)=>{
+    const d=document.createElement('div');d.className='forget-slot';
+    d.innerHTML=`<span class="tbadge t-${mv.type.toLowerCase()}">${mv.type}</span><div style="flex:1"><div style="font-size:12px;font-weight:600">${esc(mv.name)}</div><div style="font-size:10px;color:var(--dim)">${mv.cat} · ${mv.dmg||'Status'} · ${mv.pp}/${mv.ppmax} PP</div></div><span style="font-size:10px;color:var(--red2)">Forget →</span>`;
+    d.onclick=()=>confirmForget(i);slots.appendChild(d);
+  });
+  document.getElementById('learn-modal').classList.add('open');
+}
+function confirmForget(i){
+  const forgotten=S.moves.splice(i,1)[0];
+  S.forgottenMoves=S.forgottenMoves||[];S.forgottenMoves.push(forgotten);
+  S.moves.push({...pendingLearnMv,pp:pendingLearnMv.ppmax});
+  save();closeLearnModal();renderMoves();renderMovesMgr();
+  addLog(`<p class="sys">Forgot ${esc(forgotten.name)}, learned ${esc(pendingLearnMv.name)}.</p>`);
+}
+function closeLearnModal(){document.getElementById('learn-modal').classList.remove('open');pendingLearnMv=null;}
+
+// ═══════════════ CONDITIONS / SKILLS / STP ═══════════════
+function renderConds(){const g=document.getElementById('cond-grid');if(!g)return;g.innerHTML='';CONDS.forEach(c=>{const d=document.createElement('div');d.className='cond'+(S.char.conditions[c]?' on':'');d.textContent=c;d.onclick=()=>{S.char.conditions[c]=!S.char.conditions[c];save();renderConds();};g.appendChild(d);});}
+function toggleSTP(s){S.char.stProf[s]=!S.char.stProf[s];save();['str','dex','con','int','wis','cha'].forEach(x=>{const e=document.getElementById('stp-'+x);if(e)e.classList.toggle('prof',!!S.char.stProf[x]);});applySheet();}
+function renderSTP(){['str','dex','con','int','wis','cha'].forEach(s=>{const e=document.getElementById('stp-'+s);if(e)e.classList.toggle('prof',!!S.char.stProf[s]);});}
+function renderSkills(){
+  const g=document.getElementById('sk-grid');if(!g)return;g.innerHTML='';const prof=S.char.prof||2;
+  SKILLS.forEach(sk=>{const p=S.char.skillProf[sk.a]||false,b=mmod(S.char[sk.s]||10)+(p?prof:0);const r=document.createElement('div');r.className='sk-row';r.innerHTML=`<div class="sk-dot${p?' prof':''}" onclick="event.stopPropagation();toggleSkProf('${sk.a}')"></div><span class="sk-nm">${sk.n}</span><span class="sk-st">${sk.s.toUpperCase()}</span><span class="sk-bn">${fmod(b)}</span><button class="sk-rb" onclick="event.stopPropagation();rollSkill('${sk.n}',${b})">Roll</button>`;g.appendChild(r);});
+}
+function toggleSkProf(a){S.char.skillProf[a]=!S.char.skillProf[a];save();renderSkills();}
+function rollSkill(name,bonus){const r=rollD(20),tot=r+bonus;const f=r===20?'NAT 20!':r===1?'Nat 1!':tot>=15?'Success':tot>=10?'Partial':'Fail';addLog(`<p class="skr">🎯 ${name}: d20(${r})${fmod(bonus)} = <b>${tot}</b> — ${f}</p>`);callDM(`Skill check: I rolled ${tot} total on a ${name} check (d20=${r}, mod=${fmod(bonus)}). Narrate the outcome.`,false);}
+
+// ═══════════════ MOVES ═══════════════
+let editMI=-1;
+function addMove(){editMI=-1;clearMF();document.getElementById('move-form').style.display='block';}
+function cancelMove(){document.getElementById('move-form').style.display='none';}
+function clearMF(){['m-name','m-dmg','m-range','m-save','m-desc'].forEach(id=>document.getElementById(id).value='');document.getElementById('m-type').value='Normal';document.getElementById('m-cat').value='Physical';document.getElementById('m-pp').value='';document.getElementById('m-ppmax').value='';}
+function saveMove(){const g=id=>document.getElementById(id).value;const mv={name:g('m-name')||'Move',type:g('m-type'),cat:g('m-cat'),dmg:g('m-dmg'),range:g('m-range'),save:g('m-save'),pp:parseInt(g('m-pp'))||5,ppmax:parseInt(g('m-ppmax'))||5,desc:g('m-desc')};if(editMI>=0)S.moves[editMI]=mv;else S.moves.push(mv);save();renderMoves();document.getElementById('move-form').style.display='none';}
+function restAll(){S.moves.forEach(m=>m.pp=m.ppmax);S.char.hpCur=S.char.hpMax;updateHPUI();updateHdrStats();save();renderMoves();addLog('<p class="sys">Rested — HP and all PP restored.</p>');}
+function editMove(i){editMI=i;const m=S.moves[i];document.getElementById('m-name').value=m.name;document.getElementById('m-type').value=m.type;document.getElementById('m-cat').value=m.cat;document.getElementById('m-dmg').value=m.dmg;document.getElementById('m-range').value=m.range;document.getElementById('m-save').value=m.save;document.getElementById('m-pp').value=m.pp;document.getElementById('m-ppmax').value=m.ppmax;document.getElementById('m-desc').value=m.desc;document.getElementById('move-form').style.display='block';}
+function delMove(i){if(confirm('Remove?')){S.moves.splice(i,1);save();renderMoves();}}
+function useMove(i){if(S.moves[i].pp<=0){alert('No PP!');return;}S.moves[i].pp--;save();renderMoves();const m=S.moves[i];addLog(`<p style="color:var(--gold2)">⚡ Used ${esc(m.name)}! (${m.pp}/${m.ppmax} PP)</p>`);callDM(`I used the move ${m.name} (${m.type} type, ${m.cat}, ${m.dmg} damage). Narrate the effect.`,false);}
+function renderMoves(){
+  const el=document.getElementById('moves-list');if(!S.moves.length){el.innerHTML='<div class="empty">No moves yet.</div>';return;}
+  el.innerHTML='';const t=document.createElement('table');t.style.cssText='width:100%;border-collapse:collapse;font-size:12px';
+  t.innerHTML='<thead><tr style="font-size:10px;color:var(--gold);letter-spacing:.08em;text-transform:uppercase"><th style="text-align:left;padding:3px 5px;border-bottom:1px solid var(--b1)">Move</th><th style="text-align:left;padding:3px 5px;border-bottom:1px solid var(--b1)">Type</th><th style="padding:3px 5px;border-bottom:1px solid var(--b1)">Dmg</th><th style="padding:3px 5px;border-bottom:1px solid var(--b1)">PP</th><th style="padding:3px 5px;border-bottom:1px solid var(--b1)"></th></tr></thead><tbody id="mtb"></tbody>';
+  el.appendChild(t);const tb=t.querySelector('#mtb');
+  S.moves.forEach((m,i)=>{const tr=document.createElement('tr');tr.style.borderBottom='1px solid rgba(26,40,64,.4)';const pips=Array.from({length:Math.min(m.ppmax,10)},(_,j)=>`<span class="pip${j>=m.pp?' sp':''}"></span>`).join('');tr.innerHTML=`<td style="padding:4px 5px"><b>${esc(m.name)}</b>${m.desc?`<br><span style="font-size:10px;color:var(--dim)">${esc(m.desc.slice(0,55))}${m.desc.length>55?'…':''}</span>`:''}</td><td style="padding:4px 5px"><span class="tbadge t-${m.type.toLowerCase()}">${m.type}</span></td><td style="padding:4px 5px;color:var(--dim);text-align:center">${esc(m.dmg)||'—'}</td><td style="padding:4px 5px">${pips}<br><span style="font-size:10px;color:var(--dim)">${m.pp}/${m.ppmax}</span></td><td style="padding:4px 5px;white-space:nowrap"><button class="btn btn-t btn-sm" onclick="useMove(${i})" ${m.pp<=0?'disabled':''}>Use</button> <button class="btn btn-sm" onclick="editMove(${i})">Edit</button> <button class="btn btn-r btn-sm" onclick="delMove(${i})">X</button></td>`;tb.appendChild(tr);});
+}
+
+function renderMovesMgr(){
+  renderMoves();
+  const fc=document.getElementById('forgotten-card');const fl=document.getElementById('forgotten-list');
+  if((S.forgottenMoves||[]).length){fc.style.display='block';fl.innerHTML='';(S.forgottenMoves||[]).forEach(mv=>{const d=document.createElement('div');d.style.cssText='display:flex;align-items:center;gap:7px;padding:5px 7px;background:var(--bg);border:1px solid var(--b1);border-radius:5px;margin-bottom:3px;opacity:.7';d.innerHTML=`<span class="tbadge t-${mv.type.toLowerCase()}">${mv.type}</span><span style="flex:1;font-size:12px">${esc(mv.name)}</span><span style="font-size:10px;color:var(--dim)">${mv.cat}</span>`;fl.appendChild(d);});}
+  else fc.style.display='none';
+  const tsp=document.getElementById('tm-sp');if(tsp&&S.char.species)tsp.value=S.char.species;
+}
+
+// ═══════════════ TM SYSTEM ═══════════════
+let tmOk=false;
+async function checkTMCompat(){
+  const mn=document.getElementById('tm-move').value.trim();const sp=document.getElementById('tm-sp').value.trim();
+  const res=document.getElementById('tm-compat');const btn=document.getElementById('tm-btn');
+  tmOk=false;btn.disabled=true;if(!mn||mn.length<2){res.textContent='';return;}if(!sp){res.innerHTML='<span style="color:var(--red2)">Enter species.</span>';return;}
+  res.textContent='Checking…';
+  try{
+    const r=await fetch(`${POKEAPI}/pokemon/${slugify(sp)}`);if(!r.ok)throw new Error('Species not found');
+    const d=await r.json();const mvData=d.moves.find(m=>m.move.name===slugify(mn));
+    if(!mvData)throw new Error(`${sp} cannot learn ${mn}`);
+    const ok=mvData.version_group_details.some(v=>v.move_learn_method.name==='machine'||v.move_learn_method.name==='tutor');
+    if(ok){res.innerHTML=`<span style="color:var(--green2)">✓ ${esc(sp)} can learn ${esc(mn)} via TM.</span>`;tmOk=true;btn.disabled=false;}
+    else throw new Error(`${mn} not in TM list for ${sp}`);
+  }catch(e){res.innerHTML=`<span style="color:var(--red2)">✗ ${esc(e.message)}</span>`;}
+}
+
+async function useTM(){
+  if(!tmOk)return;
+  const mn=document.getElementById('tm-move').value.trim();const st=document.getElementById('tm-status');
+  const tmInBag=S.inventory.find(it=>it.name.toLowerCase().includes('tm')&&it.name.toLowerCase().includes(mn.toLowerCase()));
+  if(!tmInBag&&!confirm(`No TM for "${mn}" in bag. Apply anyway?`))return;
+  st.textContent='Fetching move data…';
+  const md=await fetch(`${POKEAPI}/move/${slugify(mn)}`).then(r=>r.ok?r.json():null).catch(()=>null);
+  if(!md){st.textContent='Could not fetch — add manually on Moves tab.';return;}
+  const pwr=md.power,pp=Math.min(md.pp||5,20);const mt=md.type?.name?md.type.name.replace(/\b\w/g,c=>c.toUpperCase()):'Normal';const cat=md.damage_class?.name==='physical'?'Physical':md.damage_class?.name==='special'?'Special':'Status';const dmg=pwr?(pwr<=40?'1d6':pwr<=60?'1d8':pwr<=80?'2d6':pwr<=100?'2d8':'3d6'):'—';const acc=md.accuracy;
+  const newMove={name:mn.replace(/\b\w/g,c=>c.toUpperCase()),type:mt,cat,dmg,pp,ppmax:pp,range:cat==='Status'?'Self':'30ft',save:acc?`DC${10+Math.round((100-acc)/10)}`:'—',desc:md.flavor_text_entries?.find(f=>f.language.name==='en')?.flavor_text?.replace(/\f/g,' ')||''};
+  if(tmInBag){if(tmInBag.qty>1)tmInBag.qty--;else S.inventory.splice(S.inventory.indexOf(tmInBag),1);}
+  if(S.moves.length>=4){openLearnModal(newMove);st.textContent='Choose a move to forget.';}
+  else{S.moves.push(newMove);save();renderMovesMgr();st.textContent=`✓ ${newMove.name} learned via TM!`;}
+}
+
+function useHeartScale(){
+  const st=document.getElementById('hs-status');
+  const hs=S.inventory.find(it=>it.name.toLowerCase().includes('heart scale'));
+  if(!hs){st.textContent='No Heart Scale in bag.';return;}
+  if(!(S.forgottenMoves||[]).length){st.textContent='No forgotten moves to relearn.';return;}
+  const names=(S.forgottenMoves||[]).map((mv,i)=>`${i+1}. ${mv.name} (${mv.type})`).join('\n');
+  const ch=prompt(`Relearn which move?\n${names}\n\nNumber:`);const idx=parseInt(ch)-1;
+  if(isNaN(idx)||!S.forgottenMoves[idx])return;
+  const toLearn={...S.forgottenMoves[idx],pp:S.forgottenMoves[idx].ppmax||5};
+  if(S.moves.length>=4){openLearnModal(toLearn);st.textContent='Choose a move to forget first.';}
+  else{S.moves.push(toLearn);S.forgottenMoves.splice(idx,1);if(hs.qty>1)hs.qty--;else S.inventory.splice(S.inventory.indexOf(hs),1);save();renderMovesMgr();st.textContent=`✓ Relearned ${toLearn.name}! Heart Scale consumed.`;}
+}
+
+// ═══════════════ INVENTORY ═══════════════
+function addItem(){document.getElementById('item-form').style.display='block';}
+function saveItem(){S.inventory.push({name:document.getElementById('i-name').value||'Item',qty:parseInt(document.getElementById('i-qty').value)||1,desc:document.getElementById('i-desc').value});save();renderInv();document.getElementById('item-form').style.display='none';['i-name','i-desc'].forEach(id=>document.getElementById(id).value='');document.getElementById('i-qty').value=1;}
+function useItem(i){const it=S.inventory[i];addLog(`<p style="color:var(--gold)">🎒 Used ${esc(it.name)}.</p>`);callDM(`I used ${it.name}${it.desc?' ('+it.desc+')':''}. Narrate the effect.`,false);if(it.qty>1)it.qty--;else S.inventory.splice(i,1);save();renderInv();}
+function delItem(i){if(confirm('Remove?')){S.inventory.splice(i,1);save();renderInv();}}
+function renderInv(){
+  const el=document.getElementById('inv-list');if(!S.inventory.length){el.innerHTML='<div class="empty">Bag is empty.</div>';return;}el.innerHTML='';
+  S.inventory.forEach((it,i)=>{const d=document.createElement('div');d.className='inv-item';d.innerHTML=`<span style="flex:1;font-size:12px">${esc(it.name)}</span><span style="color:var(--gold);font-size:11px;min-width:22px;text-align:center">×${it.qty}</span><span style="font-size:11px;color:var(--dim);flex:2">${esc(it.desc)}</span><button class="btn btn-t btn-sm" onclick="useItem(${i})">Use</button><button class="btn btn-r btn-sm" onclick="delItem(${i})">X</button>`;el.appendChild(d);});
+  updateHdrStats();
+}
+
+// ═══════════════ PARTY SYSTEM ═══════════════
+async function genParty(){
+  if(!getKey()){showKeyGate();return;}
+  const btn=document.getElementById('gen-btn'),st=document.getElementById('party-status');
+  btn.disabled=true;st.textContent='Rolling companions…';
+  const ids=pickN(POOL,3);S.companions=[];
+  for(let i=0;i<3;i++){st.textContent=`Generating companion ${i+1}/3…`;await genSlot(i,ids[i]);}
+  save();renderParty();updatePartyBar();
+  st.textContent='Your rescue team is ready.';
+  document.getElementById('reroll-btn').style.display='inline-flex';
+  document.getElementById('clear-btn').style.display='inline-flex';
+  btn.disabled=false;
+  checkRoomUnlocks();
+}
+
+async function genSlot(idx,dexId){
+  const arch=pick(ARCHETYPES);
+  try{
+    const pr=await fetch(`${POKEAPI}/pokemon/${dexId}`);if(!pr.ok)throw new Error();
+    const pd=await pr.json();
+    const sp=pd.name.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+    const types=pd.types.map(t=>t.type.name.replace(/\b\w/g,c=>c.toUpperCase())).join('/');
+    const gs=n=>pd.stats.find(s=>s.stat.name===n)?.base_stat||50;
+    const atk=gs('attack'),def=gs('defense'),spa=gs('special-attack'),spd2=gs('special-defense'),spd=gs('speed'),hp=gs('hp');
+    const bst=atk+def+spa+spd2+spd+hp;
+    const sc={str:b2s(atk),dex:b2s(spd),con:b2s(hp),int:b2s(spa),wis:b2s(spd2),cha:b2s(def)};
+    const hd=calcHD(bst),ac=calcAC(def,spd2,spd),maxHp=calcMaxHp(hd,sc.con,1);
+    // Get level-1 moves for companion
+    let moveSlugs=pd.moves.filter(m=>m.version_group_details.some(v=>v.move_learn_method.name==='level-up'&&v.level_learned_at<=1)).map(m=>m.move.name).slice(0,2);
+    let compMoves=[{name:'Quick Attack',type:'Normal',cat:'Physical',dmg:'1d4',pp:30,ppmax:30,save:'—',range:'5ft'},{name:'Growl',type:'Normal',cat:'Status',dmg:'—',pp:40,ppmax:40,save:'—',range:'30ft'}];
+    if(moveSlugs.length){
+      const mds=await Promise.allSettled(moveSlugs.map(n=>fetch(`${POKEAPI}/move/${n}`).then(r=>r.ok?r.json():null).catch(()=>null)));
+      compMoves=moveSlugs.map((mn,i)=>{const md=mds[i].status==='fulfilled'?mds[i].value:null;const pwr=md?.power,pp=Math.min(md?.pp||5,20);const mt=md?.type?.name?md.type.name.replace(/\b\w/g,c=>c.toUpperCase()):'Normal';const cat=md?.damage_class?.name==='physical'?'Physical':md?.damage_class?.name==='special'?'Special':'Status';const dmg=pwr?(pwr<=40?'1d4':pwr<=60?'1d6':pwr<=80?'1d8':'2d6'):'—';return{name:mn.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase()),type:mt,cat,dmg,pp,ppmax:pp,save:'—',range:'30ft'};});
+    }
+    const profile=await genProfile(sp,types,arch);
+    const portUrl=await findPortrait(dexId,'Normal');
+    S.companions[idx]={
+      idx,name:profile.name||sp,species:sp,types,dexId,portraitUrl:portUrl,emotion:'Normal',
+      archetype:arch.r,personality:profile.personality||'A quiet Pokémon.',
+      motivation:profile.motivation||'Unknown.',secret:profile.secret||'Not saying.',
+      quirk:profile.quirk||'Goes quiet under stress.',firstWords:profile.firstWords||'…',
+      bond:0,hasLeft:false,
+      str:sc.str,dex:sc.dex,con:sc.con,int:sc.int,wis:sc.wis,cha:sc.cha,
+      ac,hd,hpMax:maxHp,hpCur:maxHp,prof:2,
+      typesArr:types.split('/').map(t=>t.trim()),
+      moves:compMoves,assistUsedThisCombat:false
+    };
+    renderSlot(idx);updatePartyBar();
+  }catch(e){
+    S.companions[idx]={idx,name:'???',species:'Unknown',types:'Normal',dexId,portraitUrl:null,emotion:'Normal',archetype:arch.r,personality:'A mysterious Pokémon.',motivation:'Unknown.',secret:'Not telling.',quirk:'Flinches at loud noises.',firstWords:'…',bond:0,hasLeft:false,str:10,dex:12,con:10,int:10,wis:10,cha:10,ac:11,hd:'d6',hpMax:10,hpCur:10,prof:2,typesArr:['Normal'],moves:[{name:'Tackle',type:'Normal',cat:'Physical',dmg:'1d6',pp:35,ppmax:35,save:'—',range:'5ft'}],assistUsedThisCombat:false};
+    renderSlot(idx);
+  }
+}
+
+async function genProfile(species,types,arch){
+  try{
+    const r=await fetch(API_URL,{method:'POST',headers:H(),body:JSON.stringify({model:MDL,max_tokens:600,system:'You are a Pokémon Mystery Dungeon character designer. Create emotionally rich companions with real contradictions. Respond ONLY with valid JSON — no markdown, no backticks, no extra text whatsoever.',messages:[{role:'user',content:`Design a companion for a ${species} (${types} type). Archetype: "${arch.r}" — they ${arch.t}.\n\nReturn ONLY this JSON object:\n{"name":"personal nickname, not their species","personality":"2-3 sentences with contradictions and a distinct speech style","motivation":"specific personal reason for being in this dungeon — a name, object, or debt","secret":"something that would change how others see them if revealed","quirk":"one subtle behavioral habit that reveals character over time","firstWords":"1-2 lines of in-character dialogue showing their personality immediately"}`}]})});
+    const d=await r.json();if(d.error)throw new Error(d.error.message);
+    const txt=d.content?.map(b=>b.text||'').join('')||'{}';
+    return JSON.parse(txt.replace(/```json|```/g,'').trim());
+  }catch(e){console.error('genProfile:',e);return {};}
+}
+
+function renderParty(){for(let i=0;i<3;i++)renderSlot(i);}
+
+function renderSlot(i){
+  const c=S.companions[i];const emp=document.getElementById('sl-'+i);const old=document.getElementById('pc-'+i);if(old)old.remove();
+  if(!c){if(emp)emp.style.display='block';return;}if(emp)emp.style.display='none';
+  const bond=c.bond||0;const bTier=bond>=80?'Sworn':bond>=50?'Trusted':bond>=25?'Warming':'New';
+  const card=document.createElement('div');card.className='pc';card.id='pc-'+i;
+  if(c.hasLeft){card.style.opacity='.5';card.style.filter='grayscale(.8)';}
+  const img=c.portraitUrl?`<img src="${c.portraitUrl}" style="width:68px;height:68px;image-rendering:pixelated;border-radius:5px" alt="${esc(c.name)}">`:`<div class="pph2">?</div>`;
+  const typesArr=c.typesArr||c.types.split('/').map(t=>t.trim());
+  const types=typesArr.map(t=>`<span class="tbadge t-${t.toLowerCase()}">${t}</span>`).join(' ');
+  const emoBtns=['Normal','Happy','Determined','Worried','Sad','Angry'].map(em=>`<button style="padding:1px 4px;border-radius:3px;border:1px solid ${c.emotion===em?'var(--teal)':'var(--b1)'};background:transparent;color:${c.emotion===em?'var(--teal2)':'var(--dim)'};font-size:9px;cursor:pointer;font-family:inherit" onclick="setCompEmo(${i},'${em}')">${em}</button>`).join('');
+  const statLine=c.str?`<div style="font-size:10px;color:var(--dim);margin-top:2px">STR ${c.str} DEX ${c.dex} CON ${c.con} | AC ${c.ac} HP ${c.hpCur}/${c.hpMax}</div>`:'';
+  card.innerHTML=`
+    <div class="pc-hd">${img}
+      <div style="flex:1;min-width:0">
+        <div class="pc-nm">${esc(c.name)}</div>
+        <div class="pc-sp">${esc(c.species)} ${types}</div>
+        <div><span class="tag">${esc(c.archetype)}</span></div>
+        <div class="barm"><div class="bar"><div class="bfill" style="width:${bond}%"></div></div><span style="font-size:10px;color:var(--teal)">${bond}/100 · ${bTier}</span></div>
+        ${statLine}
+      </div>
+    </div>
+    <div class="pc-body">
+      <div class="sec"><div class="sec-h">Personality</div><div class="sec-t">${esc(c.personality)}</div></div>
+      <div class="sec"><div class="sec-h">Why They're Here</div><div class="sec-t">${esc(c.motivation)}</div></div>
+      <div class="sec"><div class="sec-h">Quirk</div><div class="sec-t" style="color:var(--dim)">${esc(c.quirk)}</div></div>
+      <div class="sec"><div class="sec-h">Secret ◈</div><div class="sbox2">${esc(c.secret)}</div></div>
+      <div class="sec"><div class="sec-h">First Words</div><div class="sec-t" style="color:var(--gold2);font-style:italic">${esc(c.firstWords)}</div></div>
+      ${c.hasLeft?'<div style="background:rgba(214,48,48,.08);border:1px solid rgba(214,48,48,.3);border-radius:5px;padding:5px 8px;font-size:11px;color:var(--red2);margin-top:5px;font-style:italic">This companion has left the party.</div>':''}
+    </div>
+    <div class="pc-ft">
+      <span style="font-size:10px;color:var(--dim)">BOND:</span>
+      <button class="btn btn-sm" onclick="chgBond(${i},10)" ${c.hasLeft?'disabled':''}>+10</button>
+      <button class="btn btn-sm" onclick="chgBond(${i},-10)" ${c.hasLeft?'disabled':''}>−10</button>
+      <button class="btn btn-t btn-sm" onclick="talkComp(${i})" ${c.hasLeft?'disabled':''}>Talk</button>
+      <span style="flex:1"></span>
+      <div style="display:flex;gap:2px;flex-wrap:wrap">${emoBtns}</div>
+      ${!c.hasLeft?`<button class="btn btn-r btn-sm" onclick="rmComp(${i})">X</button>`:''}
+    </div>`;
+  document.getElementById('party-slots').insertBefore(card,emp||null);
+}
+
+async function setCompEmo(i,em){const c=S.companions[i];if(!c)return;c.emotion=em;const u=await findPortrait(c.dexId,em);if(u){c.portraitUrl=u;save();}renderSlot(i);updatePartyBar();}
+
+function chgBond(i,delta){
+  const c=S.companions[i];if(!c)return;const prev=c.bond;
+  c.bond=Math.max(0,Math.min(100,(c.bond||0)+delta));
+  save();renderSlot(i);updatePartyBar();
+  addLog(`<p class="bev">${delta>0?'💛':'💔'} Bond with ${esc(c.name)}: ${prev}→${c.bond}</p>`);
+  if(c.bond===0&&!c.hasLeft){c.hasLeft=true;save();renderSlot(i);updatePartyBar();addLog(`<p class="sys">— ${esc(c.name)} has left the party —</p>`);callDM(`${c.name} has left the party because their bond dropped to zero. Narrate their departure emotionally and in character.`,false);}
+  checkRoomUnlocks();
+}
+
+function rmComp(i){if(!confirm('Remove?'))return;S.companions[i]=null;save();const old=document.getElementById('pc-'+i);if(old)old.remove();const emp=document.getElementById('sl-'+i);if(emp)emp.style.display='block';updatePartyBar();}
+function talkComp(i){const c=(S.companions||[])[i];if(!c||c.hasLeft)return;goTab('story');document.getElementById('pinput').value=`I turn to ${c.name} and start a conversation, wanting to understand them better.`;takeAct();}
+function talkParty(){const a=(S.companions||[]).filter(c=>c&&!c.hasLeft);if(!a.length){alert('Generate companions first.');goTab('party');return;}document.getElementById('pinput').value=`I stop and talk with my party — ${a.map(c=>c.name).join(', ')} — about what lies ahead.`;takeAct();}
+function rerollOne(){document.getElementById('reroll-pick').style.display='block';}
+async function doReroll(i){document.getElementById('reroll-pick').style.display='none';document.getElementById('party-status').textContent=`Rerolling slot ${i+1}…`;await genSlot(i,pick(POOL));save();updatePartyBar();document.getElementById('party-status').textContent='Done.';}
+function clearParty(){if(!confirm('Disband party?'))return;S.companions=[];save();for(let i=0;i<3;i++){const o=document.getElementById('pc-'+i);if(o)o.remove();const e=document.getElementById('sl-'+i);if(e)e.style.display='block';}document.getElementById('reroll-btn').style.display='none';document.getElementById('clear-btn').style.display='none';document.getElementById('party-status').textContent='';updatePartyBar();}
+
+// ═══════════════ PARTY BAR ═══════════════
+function updatePartyBar(){
+  const ppimg=document.getElementById('pp-img');
+  if(ppimg&&S.char.portraitUrl)ppimg.innerHTML=`<img src="${S.char.portraitUrl}" style="width:42px;height:42px;image-rendering:pixelated;border-radius:4px" alt="you"/>`;
+  else if(ppimg&&!S.char.portraitUrl)ppimg.textContent='you';
+  const ppnm=document.getElementById('pp-name');if(ppnm)ppnm.textContent=S.char.name||'You';
+  const cont=document.getElementById('comp-pills');if(!cont)return;cont.innerHTML='';
+  const active=(S.companions||[]).filter(c=>c&&!c.hasLeft);
+  if(!active.length){cont.innerHTML='<span style="font-size:11px;color:var(--dim);font-style:italic">No active companions</span>';return;}
+  active.forEach(c=>{
+    const bond=c.bond||0;const col=bond>=75?'var(--teal)':bond>=40?'var(--gold)':'var(--dim)';
+    const realIdx=S.companions.indexOf(c);
+    const pill=document.createElement('div');pill.className='pill';pill.title=`${c.name} | Bond ${bond}/100 | ${c.archetype}`;pill.onclick=()=>talkComp(realIdx);
+    const img=c.portraitUrl?`<img src="${c.portraitUrl}" style="width:42px;height:42px;image-rendering:pixelated;border-radius:4px" alt="${esc(c.name)}">`:`<div class="pph">${esc(c.species.slice(0,3))}</div>`;
+    pill.innerHTML=`${img}<div class="pnm" style="color:var(--gold2)">${esc(c.name)}</div><div class="pbar"><div class="pfill" style="width:${bond}%;background:${col}"></div></div>`;
+    cont.appendChild(pill);
+  });
+}
+
+// ═══════════════ MAP SYSTEM ═══════════════
+function hexToRgb(h){if(!h||!h.startsWith('#'))return'26,40,64';const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return`${r},${g},${b}`;}
+
+function renderLocList(){
+  const el=document.getElementById('loc-items');if(!el)return;el.innerHTML='';
+  Object.values(LOCATIONS).forEach(loc=>{
+    const unlocked=(S.map.unlockedRooms||[]).includes(loc.id);
+    const item=document.createElement('div');
+    item.className='loc-item'+(unlocked?'':' locked')+(S.map.currentLoc===loc.id?' act':'');
+    item.onclick=()=>unlocked?selectLoc(loc.id):tryUnlock(loc.id);
+    const status=unlocked?(loc.type==='hub'?'Safe':S.map.locStatus?.[loc.id]||'Unexplored'):'Locked';
+    const sCls=status==='Safe'?'sb-safe':status==='Cleared'?'sb-clear':status==='Locked'?'sb-lock':'sb-exp';
+    item.innerHTML=`<div class="loc-icon" style="background:rgba(${hexToRgb(loc.color)},.15)">${loc.icon}</div><div style="flex:1;min-width:0"><div class="loc-nm">${esc(loc.name)}</div><div class="loc-sub">${loc.type==='hub'?'Hub':loc.biome||'???'}</div></div><div class="sbadge ${sCls}">${status}</div>`;
+    el.appendChild(item);
+  });
+}
+
+function selectLoc(id){
+  const loc=LOCATIONS[id];if(!loc)return;
+  S.map.currentLoc=id;save();
+  const dot=document.getElementById('player-dot');if(dot){dot.setAttribute('cx',loc.svgX);dot.setAttribute('cy',loc.svgY);}
+  renderLocList();
+  if(id==='hub')renderHubPanel();else renderDungeonPanel(loc);
+}
+
+function tryUnlock(id){
+  const loc=LOCATIONS[id];if(!loc)return;
+  document.getElementById('map-detail').innerHTML=`<div class="card"><div class="chd">Locked Room</div><p style="font-size:12px;color:var(--dim);line-height:1.65">🔒 ${esc(loc.unlockHint||'Keep exploring to find the key.')}</p></div>`;
+}
+
+// ═══════════════ HUB PANEL ═══════════════
+async function renderHubPanel(){
+  const dp=document.getElementById('map-detail');if(!dp)return;
+  dp.innerHTML=`
+    <div class="card">
+      <div class="chd">The Living Room — Hub</div>
+      <p style="font-size:12px;color:var(--dim);line-height:1.65;margin-bottom:8px">The warm impossible heart of Mew's Manor. Everyone who lives here has a reason to stay.</p>
+      <div class="flex" style="gap:5px;flex-wrap:wrap">
+        <button class="btn btn-g" onclick="restAtHub()">💤 Rest (Full HP/PP)</button>
+        <button class="btn btn-t" onclick="travelToLoc('hub')">Enter Hub</button>
+      </div>
+    </div>
+    <div class="card"><div class="chd">Residents</div><div id="hub-npcs"><div style="font-size:11px;color:var(--dim);font-style:italic">Loading portraits…</div></div></div>
+    <div class="card"><div class="chd">Shop — Duskull's Wares <span style="color:var(--gold);font-size:10px">(${S.res.gold||0} Poké)</span></div><div id="hub-shop"></div></div>
+    <div class="card"><div class="chd">Notice Board</div><div id="hub-quests"></div></div>`;
+  renderHubNPCs();renderShop();renderQuestBoard();
+}
+
+async function renderHubNPCs(){
+  const sec=document.getElementById('hub-npcs');if(!sec)return;sec.innerHTML='';
+  for(const npc of HUB_NPCS){
+    if(!npc.portraitUrl&&npc.dexId){npc.portraitUrl=await findPortrait(npc.dexId,'Normal');}
+    const row=document.createElement('div');row.className='npc-row';
+    const img=npc.portraitUrl?`<img src="${npc.portraitUrl}" alt="${esc(npc.name)}" style="width:38px;height:38px;image-rendering:pixelated;border-radius:4px"/>`:`<div class="nph">${npc.name.slice(0,2)}</div>`;
+    row.innerHTML=`${img}<div style="flex:1;min-width:0"><div class="npc-nm">${esc(npc.name)}</div><div class="npc-rl">${esc(npc.role)}</div><div class="npc-ln">${esc(npc.line)}</div><button class="btn btn-sm btn-t" style="margin-top:3px" onclick="talkNPC('${esc(npc.name)}')">Talk</button></div>`;
+    sec.appendChild(row);
+  }
+}
+
+function renderShop(){
+  const sec=document.getElementById('hub-shop');if(!sec)return;sec.innerHTML='';
+  SHOP_ITEMS.forEach(item=>{
+    const d=document.createElement('div');d.className='shop-item';
+    d.innerHTML=`<span style="flex:1;font-size:12px;font-weight:600">${esc(item.name)}</span><span style="font-size:11px;color:var(--dim);flex:2">${esc(item.desc)}</span><span style="font-size:11px;color:var(--gold);white-space:nowrap;margin-right:5px">${item.price} P</span><button class="btn btn-sm" onclick="buyItem('${esc(item.name)}','${esc(item.desc)}',${item.price})" ${(S.res.gold||0)<item.price?'disabled':''}>Buy</button>`;
+    sec.appendChild(d);
+  });
+}
+
+function buyItem(name,desc,price){
+  if((S.res.gold||0)<price){alert('Not enough Poké!');return;}
+  S.res.gold-=price;
+  const ex=S.inventory.find(it=>it.name===name);if(ex)ex.qty++;else S.inventory.push({name,desc,qty:1});
+  save();renderInv();renderShop();
+  const hg=document.getElementById('hdr-gold');if(hg)hg.textContent=S.res.gold;
+  const shopHd=document.querySelector('#hub-shop')?.previousElementSibling;if(shopHd)shopHd.textContent=`Shop — Duskull's Wares (${S.res.gold} Poké)`;
+  addLog(`<p class="sys">Bought ${esc(name)} for ${price} Poké.</p>`);
+}
+
+function renderQuestBoard(){
+  const sec=document.getElementById('hub-quests');if(!sec)return;sec.innerHTML='';
+  QUESTS.forEach(q=>{
+    const progress=S.quests[q.id]||'new';
+    const d=document.createElement('div');
+    d.className=`q-card${progress==='active'?' q-active':progress==='done'?' q-done':''}`;
+    const sc=progress==='active'?'qs-act':progress==='done'?'qs-done':'qs-new';
+    const st=progress==='active'?'Active':progress==='done'?'Complete':'New';
+    const rewTxt=`${q.reward.gold} Poké + ${q.reward.item}${q.reward.unlock?' + New Room Unlocked':''}`;
+    d.innerHTML=`<div class="q-title">${esc(q.title)}</div><div class="q-desc">${esc(q.desc)}</div><div class="q-rew">Reward: ${esc(rewTxt)}</div><div style="display:flex;gap:5px;align-items:center;margin-top:4px"><span class="q-sb ${sc}">${st}</span>${progress==='new'?`<button class="btn btn-sm btn-t" onclick="acceptQuest('${q.id}')">Accept</button>`:''}${progress==='active'?`<button class="btn btn-sm btn-g" onclick="completeQuest('${q.id}')">Complete</button>`:''}`;
+    sec.appendChild(d);
+  });
+}
+
+function acceptQuest(id){S.quests[id]='active';save();renderQuestBoard();addLog(`<p class="sys">Quest accepted: ${esc(QUESTS.find(q=>q.id===id)?.title||id)}</p>`);}
+
+function completeQuest(id){
+  const q=QUESTS.find(q=>q.id===id);if(!q)return;
+  S.quests[id]='done';
+  S.res.gold=(S.res.gold||0)+q.reward.gold;
+  const ex=S.inventory.find(it=>it.name===q.reward.item);if(ex)ex.qty++;else S.inventory.push({name:q.reward.item,desc:'Quest reward.',qty:1});
+  grantXP(q.reward.xp||100);
+  if(q.reward.unlock&&!(S.map.unlockedRooms||[]).includes(q.reward.unlock)){
+    S.map.unlockedRooms.push(q.reward.unlock);
+    addLog(`<p class="bev">🔓 New room unlocked! A door swings open in the manor…</p>`);
+  }
+  save();renderQuestBoard();renderInv();renderShop();
+  const hg=document.getElementById('hdr-gold');if(hg)hg.textContent=S.res.gold;
+  addLog(`<p class="bev">✓ Quest complete: ${esc(q.title)}! +${q.reward.gold} Poké, +${q.reward.item}.</p>`);
+}
+
+function restAtHub(){
+  S.char.hpCur=S.char.hpMax;S.moves.forEach(m=>m.pp=m.ppmax);
+  (S.companions||[]).filter(c=>c&&!c.hasLeft).forEach(c=>c.hpCur=c.hpMax);
+  updateHPUI();updateHdrStats();save();renderMoves();
+  addLog(`<p class="sys">Rested at the Living Room — HP and all PP fully restored.</p>`);
+  addLog(`<p class="dm">The warmth settles over you. Someone brings something hot to drink without being asked. By the time you finish it, your wounds have closed and your energy has returned.</p>`);
+}
+
+function talkNPC(name){goTab('story');document.getElementById('pinput').value=`I walk over to ${name} in the Living Room and start a conversation.`;takeAct();}
+function travelToLoc(id){const loc=LOCATIONS[id];if(!loc)return;goTab('story');callDM(`I travel to ${loc.name}. Narrate my arrival with vivid atmospheric detail.`,false);}
+
+// ═══════════════ DUNGEON PANEL ═══════════════
+function renderDungeonPanel(loc){
+  const dp=document.getElementById('map-detail');if(!dp)return;
+  const curFloor=S.map.floorProgress?.[loc.id]||0;
+  const floors=loc.floors||10;
+  const floorEvents=S.map.floorEvents?.[loc.id]||{};
+  const weather=curFloor>0?pick(WEATHER_TYPES):null;
+  let fdots='';
+  for(let i=1;i<=floors;i++){
+    const vis=i<=curFloor,isCur=i===curFloor,isBoss=i===floors;
+    fdots+=`<div class="fdot${vis?' visited':''}${isCur?' cur':''}${isBoss?' boss':''}" title="Floor ${i}${isBoss?' — Boss':''}" onclick="goToFloor('${loc.id}',${i})"></div>`;
+  }
+  const curEvents=curFloor>0?(floorEvents[curFloor]||[]):[];
+  const evHtml=curEvents.length?curEvents.map(ev=>`<div class="floor-event ${ev.type||'event'}">${esc(ev.text)}</div>`).join(''):`<div style="font-size:11px;color:var(--dim);font-style:italic">No events logged yet.</div>`;
+
+  dp.innerHTML=`
+    <div class="card">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+        <div style="width:70px;height:70px;border-radius:8px;background:var(--ink);border:1px solid var(--b2);display:flex;align-items:center;justify-content:center;font-size:34px;flex-shrink:0">${loc.biomeEmoji||loc.icon}</div>
+        <div style="flex:1;min-width:120px">
+          <div style="font-size:14px;font-weight:600;color:var(--gold2)">${esc(loc.name)}</div>
+          <div style="font-size:11px;color:var(--teal);margin:2px 0 4px">${esc(loc.biome||'Mystery Dungeon')}</div>
+          <div style="font-size:12px;color:var(--dim);line-height:1.55">${esc(loc.desc||'')}</div>
+          <div style="margin-top:4px;font-size:11px;color:var(--dim)">Depth: <span style="color:var(--gold)">${curFloor}/${floors}</span> &nbsp;·&nbsp; Boss: <span style="color:var(--red2)">${esc(loc.bossHint||'Unknown')}</span></div>
+        </div>
+      </div>
+      <div class="flex" style="gap:4px;flex-wrap:wrap">
+        <button class="btn btn-t" onclick="enterDungeon('${loc.id}')">Enter / Descend</button>
+        <button class="btn btn-sm" onclick="retreatHub()">← Back to Hub</button>
+        <button class="btn btn-sm" onclick="goTab('combat')">⚔ Open Combat</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="chd">Floor Progress</div>
+      <div class="fdots">${fdots}</div>
+      <div style="font-size:11px;color:var(--dim);margin-top:4px">${curFloor>0?`Floor ${curFloor}: <span style="color:var(--text)">${esc(loc.floorThemes?.[curFloor-1]||'Unknown')}</span>`:'Not yet entered.'}</div>
+      ${weather&&curFloor>0?`<div style="margin-top:6px;font-size:11px"><span style="color:var(--gold);letter-spacing:.06em;text-transform:uppercase;font-size:10px">Condition: </span><span style="color:var(--mid)">${weather.icon} ${weather.name}</span> — <span style="color:var(--dim)">${esc(weather.effect)}</span></div>`:''}
+      ${loc.enemies?`<div style="margin-top:5px;font-size:11px;color:var(--dim)">Common Pokémon: <span style="color:var(--text)">${loc.enemies.slice(0,4).join(', ')}</span></div>`:''}
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+        <div class="chd" style="margin:0;border:none;padding:0">Floor Events</div>
+        <button class="btn btn-sm" onclick="addFloorEvent('${loc.id}',${curFloor})">+ Log</button>
+      </div>
+      ${evHtml}
+    </div>`;
+}
+
+function enterDungeon(id){
+  const loc=LOCATIONS[id];if(!loc)return;
+  if(!(S.map.unlockedRooms||[]).includes(id)){alert('This room is locked.');return;}
+  if(!S.map.floorProgress)S.map.floorProgress={};
+  if(!S.map.locStatus)S.map.locStatus={};
+  if(!S.map.floorProgress[id])S.map.floorProgress[id]=1;
+  else S.map.floorProgress[id]=Math.min(loc.floors,S.map.floorProgress[id]+1);
+  S.map.locStatus[id]='Exploring';save();
+  const floor=S.map.floorProgress[id];
+  const floorDesc=loc.floorThemes?.[floor-1]||`Floor ${floor}`;
+  const isBoss=floor===loc.floors;
+  const weather=pick(WEATHER_TYPES);
+  selectLoc(id);goTab('story');
+  callDM(`I ${floor===1?'enter':'descend deeper into'} ${loc.name}, now on floor ${floor}: "${floorDesc}". ${isBoss?'This is the boss floor — '+loc.bossHint+'. ':''}Floor condition today: ${weather.name} — ${weather.effect} Narrate the scene vividly.`,false);
+  QUESTS.forEach(q=>{if(S.quests[q.id]==='active'&&q.location===id&&floor>=q.targetFloor){addLog(`<p class="bev">📋 Quest objective reached for "${q.title}"! Return to the hub to complete it.</p>`);}});
+  checkRoomUnlocks();renderLocList();
+}
+
+function goToFloor(id,floor){
+  const loc=LOCATIONS[id];if(!loc)return;
+  const reached=S.map.floorProgress?.[id]||0;
+  if(floor>reached+1){addLog(`<p class="sys">You haven't reached floor ${floor} yet.</p>`);return;}
+  if(!S.map.floorProgress)S.map.floorProgress={};
+  S.map.floorProgress[id]=Math.max(reached,floor);
+  S.map.locStatus[id]='Exploring';save();
+  renderDungeonPanel(loc);goTab('story');
+  const floorDesc=loc.floorThemes?.[floor-1]||`Floor ${floor}`;const isBoss=floor===loc.floors;
+  callDM(`I travel to floor ${floor} of ${loc.name}: "${floorDesc}". ${isBoss?'This is the boss floor — '+loc.bossHint+'. ':''}Narrate the scene.`,false);
+  checkRoomUnlocks();
+}
+
+function retreatHub(){selectLoc('hub');goTab('story');addLog('<p class="sys">Retreated to the Living Room.</p>');callDM('I retreat back to the Living Room of Mew\'s Manor to rest and regroup.',false);}
+
+function addFloorEvent(locId,floor){
+  if(floor<=0){alert('Enter a dungeon first.');return;}
+  const text=prompt('What happened on this floor?');if(!text)return;
+  const typeInput=prompt('Type (enemy / item / event):','event');
+  const type=['enemy','item','event'].includes(typeInput)?typeInput:'event';
+  if(!S.map.floorEvents)S.map.floorEvents={};
+  if(!S.map.floorEvents[locId])S.map.floorEvents[locId]={};
+  if(!S.map.floorEvents[locId][floor])S.map.floorEvents[locId][floor]=[];
+  S.map.floorEvents[locId][floor].push({text,type});
+  save();renderDungeonPanel(LOCATIONS[locId]);
+}
+
+// ═══════════════ ROOM UNLOCKS ═══════════════
+function checkRoomUnlocks(){
+  const unlocked=S.map.unlockedRooms=S.map.unlockedRooms||[];let changed=false;
+  const add=(id,msg)=>{if(!unlocked.includes(id)){unlocked.push(id);addLog(`<p class="bev">🔓 ${msg}</p>`);changed=true;}};
+  if((S.map.floorProgress?.library||0)>=5)add('left','A door on the left side of the Living Room swings open!');
+  if(S.map.locStatus?.cellar==='Cleared')add('tl','Clearing the Cellar revealed a hidden passage above!');
+  const maxFloor=Math.max(0,...Object.values(S.map.floorProgress||{}).map(v=>v||0));
+  if(maxFloor>=5)add('bl','Reaching depth 5 opened a new passage in the manor!');
+  if((S.companions||[]).some(c=>c&&(c.bond||0)>=75))add('tr','Your deep bond with a companion unlocked something in the manor…');
+  if(changed){save();renderLocList();}
+}
+
+// ═══════════════ TYPE EFFECTIVENESS ═══════════════
+const TYPE_EFF={
+  Normal:{Ghost:0,Rock:.5,Steel:.5},
+  Fire:{Fire:.5,Water:.5,Rock:.5,Dragon:.5,Grass:2,Ice:2,Bug:2,Steel:2},
+  Water:{Water:.5,Grass:.5,Dragon:.5,Fire:2,Ground:2,Rock:2},
+  Grass:{Fire:.5,Grass:.5,Poison:.5,Flying:.5,Bug:.5,Dragon:.5,Steel:.5,Water:2,Ground:2,Rock:2},
+  Electric:{Ground:0,Grass:.5,Electric:.5,Dragon:.5,Water:2,Flying:2},
+  Ice:{Water:.5,Ice:.5,Steel:.5,Fire:.5,Grass:2,Ground:2,Flying:2,Dragon:2},
+  Fighting:{Normal:2,Ice:2,Rock:2,Dark:2,Steel:2,Ghost:0,Poison:.5,Bug:.5,Psychic:.5,Flying:.5,Fairy:.5},
+  Poison:{Steel:0,Poison:.5,Ground:.5,Rock:.5,Ghost:.5,Grass:2,Fairy:2},
+  Ground:{Flying:0,Bug:.5,Grass:.5,Fire:2,Electric:2,Poison:2,Rock:2,Steel:2},
+  Flying:{Electric:.5,Rock:.5,Steel:.5,Bug:2,Grass:2,Fighting:2},
+  Psychic:{Dark:0,Psychic:.5,Steel:.5,Fighting:2,Poison:2},
+  Bug:{Fire:.5,Fighting:.5,Flying:.5,Ghost:.5,Steel:.5,Fairy:.5,Grass:2,Psychic:2,Dark:2},
+  Rock:{Fighting:.5,Ground:.5,Steel:.5,Fire:2,Ice:2,Flying:2,Bug:2},
+  Ghost:{Normal:0,Dark:.5,Ghost:2,Psychic:2},
+  Dark:{Fighting:.5,Dark:.5,Fairy:.5,Psychic:2,Ghost:2},
+  Dragon:{Fairy:0,Steel:.5,Dragon:2},
+  Steel:{Fire:.5,Water:.5,Electric:.5,Steel:.5,Ice:2,Rock:2,Fairy:2,Poison:2,Normal:2,Grass:2},
+  Fairy:{Fire:.5,Poison:.5,Steel:.5,Fighting:2,Dragon:2,Dark:2}
+};
+function typeEff(atk,defs){
+  let m=1;const row=TYPE_EFF[atk]||{};
+  (Array.isArray(defs)?defs:[defs]).forEach(d=>{const v=row[d];if(v!==undefined)m*=v;});
+  return m;
+}
+
+// ═══════════════ COMBAT STATE ═══════════════
+let CB={active:false,player:null,companions:[],enemies:[],initiative:[],turnIdx:0,round:1,bonusUsed:false};
+
+function makeCombatant(src,side){
+  const types=Array.isArray(src.types)?src.types:Array.isArray(src.typesArr)?src.typesArr:(src.types||'Normal').split('/').map(t=>t.trim());
+  return{
+    id:src.id||src.name,name:src.name,species:src.species||src.name,types,
+    hp:src.hpCur||src.hp||src.hpMax||10,maxHp:src.hpMax||src.hp||10,
+    ac:src.ac||12,prof:src.prof||2,level:src.level||1,
+    str:src.str||10,dex:src.dex||10,con:src.con||10,int:src.int||10,wis:src.wis||10,cha:src.cha||10,
+    moves:JSON.parse(JSON.stringify(src.moves||[])),
+    portraitUrl:src.portraitUrl||null,
+    conditions:[],statusDur:{},side,
+    bond:src.bond||0,archetype:src.archetype||'',personality:src.personality||'',
+    cmdQueued:null,assistUsed:false
+  };
+}
+
+// ═══════════════ ENCOUNTER SETUP ═══════════════
+async function startEncounter(){
+  const sp=document.getElementById('enc-sp').value.trim().toLowerCase().replace(/\s+/g,'-').replace(/[.']/g,'');
+  const count=parseInt(document.getElementById('enc-ct').value)||1;
+  const level=parseInt(document.getElementById('enc-lv').value)||1;
+  const customName=document.getElementById('enc-nm').value.trim();
+  const mot=document.getElementById('enc-mot').value;
+  const status=document.getElementById('enc-status');
+  if(!sp){alert('Enter enemy species.');return;}
+  if(!S.char.species){alert('Set up your character first!');goTab('char');return;}
+  status.textContent='Loading enemy data…';
+  try{
+    const r=await fetch(`${POKEAPI}/pokemon/${sp}`);if(!r.ok)throw new Error(`"${sp}" not found`);
+    const d=await r.json();
+    const gs=n=>d.stats.find(s=>s.stat.name===n)?.base_stat||50;
+    const atk=gs('attack'),def=gs('defense'),spa=gs('special-attack'),spd2=gs('special-defense'),spd=gs('speed'),hp=gs('hp');
+    const bst=atk+def+spa+spd2+spd+hp;
+    const sc=(b,lv)=>Math.max(4,Math.min(20,Math.round(b*20/255)+3)+Math.floor(lv/4));
+    const scores={str:sc(atk,level),dex:sc(spd,level),con:sc(hp,level),int:sc(spa,level),wis:sc(spd2,level),cha:sc(def,level)};
+    const prof=calcProf(level);
+    const hdSides=bst>=500?10:bst>=380?8:6;
+    const maxHp=hdSides+mmod(scores.con)+Math.max(0,(level-1)*Math.floor(hdSides/2));
+    const ac=calcAC(def,spd2,spd);
+    const types=d.types.map(t=>t.type.name.replace(/\b\w/g,c=>c.toUpperCase()));
+    const sname=d.name.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+    let moveSlugs=d.moves.filter(m=>m.version_group_details.some(v=>v.move_learn_method.name==='level-up'&&v.level_learned_at<=level)).map(m=>m.move.name).slice(0,4);
+    if(!moveSlugs.length)moveSlugs=d.moves.filter(m=>m.version_group_details.some(v=>v.move_learn_method.name==='level-up')).sort((a,b)=>{const la=Math.min(...a.version_group_details.filter(v=>v.move_learn_method.name==='level-up').map(v=>v.level_learned_at));const lb=Math.min(...b.version_group_details.filter(v=>v.move_learn_method.name==='level-up').map(v=>v.level_learned_at));return la-lb;}).slice(0,2).map(m=>m.move.name);
+    status.textContent='Loading moves…';
+    const mds=await Promise.allSettled(moveSlugs.map(n=>fetch(`${POKEAPI}/move/${n}`).then(r=>r.ok?r.json():null).catch(()=>null)));
+    const eMoves=moveSlugs.map((mn,i)=>{const md=mds[i].status==='fulfilled'?mds[i].value:null;const pwr=md?.power,pp=Math.min(md?.pp||5,20);const mt=md?.type?.name?md.type.name.replace(/\b\w/g,c=>c.toUpperCase()):(types[0]||'Normal');const cat=md?.damage_class?.name==='physical'?'Physical':md?.damage_class?.name==='special'?'Special':'Status';const dmg=pwr?(pwr<=40?'1d6':pwr<=60?'1d8':pwr<=80?'2d6':pwr<=100?'2d8':'3d6'):'—';return{name:mn.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase()),type:mt,cat,dmg,pp,ppmax:pp,save:'—',range:'30ft'};});
+    if(!eMoves.length)eMoves.push({name:'Tackle',type:'Normal',cat:'Physical',dmg:'1d6',pp:35,ppmax:35,save:'—',range:'5ft'});
+    status.textContent='Loading portrait…';
+    let portUrl=null;try{portUrl=await findPortrait(d.id);}catch(e){}
+    CB.enemies=[];
+    for(let i=0;i<count;i++){
+      const nm=count>1?(customName?`${customName} ${i+1}`:`${sname} #${i+1}`):customName||sname;
+      CB.enemies.push(makeCombatant({id:'e'+i,name:nm,species:sname,types,hp:maxHp,hpMax:maxHp,ac,prof,level,str:scores.str,dex:scores.dex,con:scores.con,int:scores.int,wis:scores.wis,cha:scores.cha,moves:JSON.parse(JSON.stringify(eMoves)),portraitUrl:portUrl},'foe'));
+    }
+    const c=S.char;
+    CB.player=makeCombatant({id:'player',name:c.name||c.species,species:c.species,types:(c.types||'Normal').split('/').map(t=>t.trim()),hp:c.hpCur,hpMax:c.hpMax,ac:c.ac,prof:c.prof||2,level:c.level||1,str:c.str,dex:c.dex,con:c.con,int:c.int,wis:c.wis,cha:c.cha,moves:JSON.parse(JSON.stringify(S.moves||[])),portraitUrl:c.portraitUrl},'player');
+    CB.companions=(S.companions||[]).filter(c=>c&&!c.hasLeft).map((c,i)=>makeCombatant({
+      id:'comp'+i,name:c.name,species:c.species,
+      types:c.typesArr||c.types,
+      hp:c.hpCur||c.hpMax||10,hpMax:c.hpMax||10,
+      ac:c.ac||11,prof:c.prof||2,level:1,
+      str:c.str||10,dex:c.dex||12,con:c.con||10,int:c.int||10,wis:c.wis||10,cha:c.cha||10,
+      moves:c.moves||[{name:'Quick Attack',type:'Normal',cat:'Physical',dmg:'1d4',pp:30,ppmax:30,save:'—',range:'5ft'}],
+      portraitUrl:c.portraitUrl,bond:c.bond||0,archetype:c.archetype||'',personality:c.personality||''
+    },'ally'));
+    rollInit();
+    status.textContent=`⚔ Encounter: ${count}× ${sname} Lv${level} (${mot})`;
+    document.getElementById('enc-setup').style.display='none';
+    document.getElementById('combat-active').style.display='block';
+    clog(`<p class="cl-sys">⚔ ENCOUNTER: ${count}× ${sname} (${mot}) ⚔</p>`);
+    addLog(`<p class="sys">⚔ ENCOUNTER STARTED: ${count}× ${sname} (Level ${level})</p>`);
+    document.getElementById('nb-combat').classList.add('show');
+  }catch(err){status.textContent='Error: '+err.message;console.error(err);}
+}
+
+// ═══════════════ INITIATIVE ═══════════════
+function rollInit(){
+  CB.active=true;CB.round=1;CB.turnIdx=0;CB.bonusUsed=false;CB.initiative=[];
+  [CB.player,...CB.companions,...CB.enemies].filter(Boolean).forEach(c=>{
+    CB.initiative.push({id:c.id,name:c.name,roll:rollD(20)+mmod(c.dex),side:c.side});
+  });
+  CB.initiative.sort((a,b)=>b.roll-a.roll||(Math.random()>.5?1:-1));
+  clog('<p class="cl-sys">🎲 Initiative rolled!</p>');
+  CB.initiative.forEach(s=>clog(`<p style="color:${s.side==='foe'?'var(--red2)':'var(--green2)'};font-size:11px">  ${s.name}: ${s.roll}</p>`));
+  document.getElementById('round-num').textContent=CB.round;
+  document.getElementById('init-card').style.display='block';
+  renderArena();renderInitBar();updateTurnCards();populateCmdSel();
+}
+function rerollInit(){rollInit();}
+
+function getCombatant(id){
+  if(id==='player')return CB.player;
+  const c=CB.companions.find(c=>c.id===id);if(c)return c;
+  return CB.enemies.find(e=>e.id===id);
+}
+
+// ═══════════════ ARENA RENDER ═══════════════
+function renderArena(){
+  const area=document.getElementById('combatants');if(!area)return;area.innerHTML='';
+  const ps=document.createElement('div');ps.style.cssText='flex:1;min-width:120px;display:flex;flex-direction:column;gap:5px';
+  if(CB.player)ps.appendChild(makeCCard(CB.player));
+  CB.companions.forEach(c=>ps.appendChild(makeCCard(c)));
+  area.appendChild(ps);
+  const vs=document.createElement('div');vs.className='vs-div';vs.innerHTML='<span style="font-size:18px;font-weight:700;color:var(--dim)">VS</span>';area.appendChild(vs);
+  const es=document.createElement('div');es.style.cssText='flex:1;min-width:120px;display:flex;flex-direction:column;gap:5px';
+  CB.enemies.forEach(e=>es.appendChild(makeCCard(e)));
+  area.appendChild(es);
+}
+
+function makeCCard(c){
+  const cur=CB.initiative[CB.turnIdx];const isCur=cur&&cur.id===c.id;
+  const div=document.createElement('div');
+  div.className=`ccard ${c.side==='foe'?'foe':'ally'}${c.hp<=0?' fainted':''}${isCur?' cur':''}`;
+  div.id='cc-'+c.id;
+  const pct=Math.max(0,Math.min(100,(c.hp/c.maxHp)*100));
+  const col=pct>50?'var(--green)':pct>25?'var(--gold)':'var(--red)';
+  const img=c.portraitUrl?`<img src="${c.portraitUrl}" style="width:44px;height:44px;image-rendering:pixelated;border-radius:4px" alt="${esc(c.name)}">`:`<div class="cph">${esc(c.name.slice(0,3))}</div>`;
+  const types=(c.types||['?']).map(t=>`<span class="tbadge t-${t.toLowerCase()}">${t}</span>`).join(' ');
+  const statuses=c.conditions.map(s=>`<span class="spip sp-${s.toLowerCase()}">${s}</span>`).join('');
+  const bondInfo=c.bond!==undefined?`<span style="font-size:9px;color:${c.bond>=75?'var(--amber2)':c.bond>=50?'var(--teal)':'var(--dim)'}">B${c.bond}</span>`:'';
+  const cmdInfo=c.cmdQueued?`<span style="font-size:9px;color:var(--amber2)">→${c.cmdQueued.toUpperCase()}</span>`:'';
+  div.innerHTML=`<div class="crow">${img}<div style="flex:1"><div class="cnm">${esc(c.name)}</div><div class="csub">${esc(c.species)} ${types}</div><div class="c-hpb"><div class="c-hpf" style="width:${pct}%;background:${col}"></div></div><div class="c-hpt">HP ${c.hp}/${c.maxHp}${c.hp<=0?' — FAINTED':''}</div></div></div>${statuses?`<div class="cstats">${statuses}</div>`:''}${bondInfo||cmdInfo?`<div class="cstats" style="margin-top:2px">${bondInfo} ${cmdInfo}</div>`:''}`;
+  return div;
+}
+
+function renderInitBar(){
+  const bar=document.getElementById('init-bar');if(!bar)return;bar.innerHTML='';
+  CB.initiative.forEach((slot,i)=>{
+    const c=getCombatant(slot.id);
+    const el=document.createElement('div');
+    el.className=`isl${i===CB.turnIdx?' cur':c&&c.hp<=0?' done':''}`;
+    const img=c?.portraitUrl?`<img src="${c.portraitUrl}" alt="${slot.name}"/>`:`<div class="iph">${slot.name.slice(0,3)}</div>`;
+    el.innerHTML=`${img}<span class="in" style="color:${slot.side==='foe'?'var(--red2)':'var(--green2)'}">${slot.name.split(' ')[0]}</span><span class="ir">${slot.roll}</span>`;
+    bar.appendChild(el);
+  });
+  const cur=CB.initiative[CB.turnIdx];
+  const tl=document.getElementById('turn-lbl');if(tl)tl.textContent=cur?`${cur.name}'s turn`:'';
+}
+
+function updateTurnCards(){
+  document.getElementById('player-card').style.display='none';
+  document.getElementById('enemy-card').style.display='none';
+  document.getElementById('comp-card').style.display='none';
+  const cur=CB.initiative[CB.turnIdx];if(!cur||!CB.active)return;
+  const c=getCombatant(cur.id);if(!c||c.hp<=0){nextTurn();return;}
+  if(cur.side==='player'){
+    document.getElementById('player-card-title').textContent=`${c.name}'s Turn — Choose a move`;
+    document.getElementById('player-card').style.display='block';
+    CB.bonusUsed=false;renderMoveGrid(c);renderCmdGrid();
+  }else if(cur.side==='ally'){
+    document.getElementById('comp-card-title').textContent=`${c.name}'s Turn`;
+    document.getElementById('comp-detail').textContent=c.cmdQueued?`Queued: ${c.cmdQueued.toUpperCase()}`:getBondBehavior(c);
+    document.getElementById('comp-card').style.display='block';
+  }else{
+    document.getElementById('enemy-card-title').textContent=`${c.name}'s Turn`;
+    document.getElementById('enemy-card').style.display='block';
+  }
+}
+
+function getBondBehavior(c){
+  const b=c.bond||0;
+  if(b>=75)return`${c.name} fights loyally — may intercept hits automatically.`;
+  if(b>=50)return`${c.name} trusts you and acts cooperatively.`;
+  if(b>=25)return`${c.name} is cautious but engaged.`;
+  return`${c.name} acts on their own instincts (bond too low for reliable commands).`;
+}
+
+// ═══════════════ MOVE GRID ═══════════════
+function renderMoveGrid(attacker){
+  const grid=document.getElementById('move-grid');if(!grid)return;grid.innerHTML='';
+  const foe=CB.enemies.find(e=>e.hp>0);
+  (attacker.moves||[]).forEach((mv,i)=>{
+    const btn=document.createElement('button');btn.className='mb';
+    if(mv.pp<=0)btn.disabled=true;
+    const hasStab=(attacker.types||[]).some(t=>t.toLowerCase()===mv.type.toLowerCase());
+    let effHtml='';
+    if(foe&&mv.cat!=='Status'){
+      const eff=typeEff(mv.type,foe.types);
+      if(eff===0)effHtml='<div class="eff-i">No effect</div>';
+      else if(eff>=2)effHtml='<div class="eff-s">Super Effective!</div>';
+      else if(eff<=.5)effHtml='<div class="eff-r">Not very effective</div>';
+    }
+    const pips=Array.from({length:Math.min(mv.ppmax,10)},(_,j)=>`<span class="pip${j>=mv.pp?' sp':''}"></span>`).join('');
+    btn.innerHTML=`${hasStab?'<span class="stab-tag">STAB</span>':''}<div class="mn">${esc(mv.name)}</div><div><span class="tbadge t-${mv.type.toLowerCase()}">${mv.type}</span> <span class="ms">${mv.cat}</span></div><div class="ms">${mv.dmg&&mv.dmg!=='—'?mv.dmg+' dmg':mv.save||'Status'}</div>${effHtml}<div class="pp-r">${pips}</div><div class="ms">${mv.pp}/${mv.ppmax} PP</div>`;
+    btn.onclick=()=>playerMove(attacker,mv,i);
+    grid.appendChild(btn);
+  });
+}
+
+// ═══════════════ COMPANION COMMANDS ═══════════════
+function populateCmdSel(){
+  const sel=document.getElementById('cmd-sel');if(!sel)return;
+  sel.innerHTML='<option value="">— Select companion —</option>';
+  CB.companions.filter(c=>c.hp>0).forEach((c,i)=>{
+    const opt=document.createElement('option');opt.value=i;opt.textContent=`${c.name} (Bond ${c.bond})`;sel.appendChild(opt);
+  });
+}
+
+function renderCmdGrid(){
+  const grid=document.getElementById('cmd-grid');if(!grid)return;grid.innerHTML='';
+  const selIdx=document.getElementById('cmd-sel').value;
+  const comp=selIdx!==''?CB.companions.filter(c=>c.hp>0)[parseInt(selIdx)]:null;
+  const bond=comp?.bond||0;
+  const cmds=[
+    {id:'focus',name:'Focus',desc:'Target your enemy. Advantage on their attack roll.',req:0},
+    {id:'cover',name:'Cover',desc:'Intercept a hit aimed at you, splitting damage.',req:25},
+    {id:'support',name:'Support',desc:'Use a status move or item instead of attacking.',req:25},
+    {id:'withdraw',name:'Withdraw',desc:'Disengage safely, skip their attack.',req:0},
+  ];
+  cmds.forEach(cmd=>{
+    const btn=document.createElement('button');btn.className='cmd-btn';
+    const canUse=bond>=cmd.req&&!CB.bonusUsed&&comp;
+    if(!canUse)btn.disabled=true;
+    btn.innerHTML=`<div class="cmd-title">${cmd.name}${cmd.req?`<span class="bond-badge">Bond ${cmd.req}+</span>`:''}</div><div class="cmd-sub">${cmd.desc}</div>`;
+    btn.onclick=()=>issueCmd(comp,cmd.id);
+    grid.appendChild(btn);
+  });
+  // Assist (Bond 50+, once per combat)
+  if(comp&&bond>=50&&!comp.assistUsed){
+    const ab=document.createElement('button');ab.className='cmd-btn';
+    ab.style.cssText='grid-column:1/-1;border-color:var(--amber);background:rgba(200,112,16,.08)';
+    ab.innerHTML=`<div class="cmd-title" style="color:var(--amber2)">Assist <span class="bond-badge">Bond 50+</span></div><div class="cmd-sub">Once per combat — add ${comp.name}'s Prof (+${comp.prof}) to your next damage roll.</div>`;
+    ab.onclick=()=>issueAssist(comp);grid.appendChild(ab);
+  }
+  // Signature Move (Bond 100)
+  if(comp&&bond>=100){
+    const sb=document.createElement('button');sb.className='cmd-btn';
+    sb.style.cssText='grid-column:1/-1;border-color:var(--purple);background:rgba(128,64,200,.1)';
+    sb.innerHTML=`<div class="cmd-title" style="color:var(--purple2)">Signature Move <span class="bond-badge" style="border-color:var(--purple);color:var(--purple2)">Bond 100</span></div><div class="cmd-sub">${comp.name}'s unique technique born from your bond. Ask the DM what it does.</div>`;
+    sb.onclick=()=>issueSig(comp);grid.appendChild(sb);
+  }
+}
+document.getElementById('cmd-sel').addEventListener('change',renderCmdGrid);
+
+function issueCmd(comp,cmdType){
+  if(!comp){alert('Select a companion first.');return;}
+  if(CB.bonusUsed){clog('<p class="cl-cmd">Bonus Action already used this turn.</p>');return;}
+  // Low bond refusal
+  if((comp.bond||0)<15&&(cmdType==='focus'||cmdType==='withdraw')&&Math.random()<.35){
+    clog(`<p class="cl-bond">${comp.name} ignores the command — their bond is too low.</p>`);CB.bonusUsed=true;renderCmdGrid();return;
+  }
+  comp.cmdQueued=cmdType;CB.bonusUsed=true;
+  clog(`<p class="cl-cmd">Bonus Action: ${comp.name} → ${cmdType.toUpperCase()}</p>`);
+  if(cmdType==='cover')clog(`<p class="cl-bond">${comp.name} braces to intercept a hit for you.</p>`);
+  if(cmdType==='focus')clog(`<p class="cl-bond">${comp.name} locks onto the target — Advantage this turn.</p>`);
+  renderArena();renderCmdGrid();
+}
+function issueAssist(comp){if(CB.bonusUsed)return;comp.assistUsed=true;CB.bonusUsed=true;clog(`<p class="cl-bond" style="color:var(--amber2)">⭐ Assist! ${comp.name} lends their strength — add +${comp.prof} to your next damage.</p>`);renderCmdGrid();}
+function issueSig(comp){if(CB.bonusUsed)return;CB.bonusUsed=true;clog(`<p class="cl-bond" style="color:var(--purple2)">✨ ${comp.name}'s Signature Move! Ask the DM to narrate its unique effect.</p>`);renderCmdGrid();}
+
+// ═══════════════ COMBAT RESOLUTION ═══════════════
+function playerMove(attacker,mv,mvIdx){
+  const target=CB.enemies.find(e=>e.hp>0);
+  if(!target){clog('<p class="cl-sys">No enemies to target!</p>');return;}
+  if(mv.pp<=0){clog('<p class="cl-miss">No PP remaining!</p>');return;}
+  mv.pp--;
+  if(attacker.side==='player'&&S.moves[mvIdx])S.moves[mvIdx].pp=mv.pp;
+  clog(`<p class="cl-sys">— ${attacker.name} used ${esc(mv.name)}! —</p>`);
+  resolveMove(attacker,mv,target,false);
+  renderArena();renderMoveGrid(attacker);
+  setTimeout(()=>nextTurn(),700);
+}
+
+function resolveMove(attacker,mv,defender,isEnemy){
+  if(mv.cat==='Status'){resolveStatus(attacker,mv,defender);return;}
+  const eff=typeEff(mv.type,defender.types);
+  if(eff===0){clog(`<p class="cl-immune">✗ ${defender.name} is immune to ${mv.type}!</p>`);return;}
+  const mpStat=mv.cat==='Physical'?attacker.str:attacker.int;
+  const mpMod=mmod(mpStat);
+  const dieRoll=rollD(20);const isCrit=dieRoll===20;
+  const attackTotal=dieRoll+mpMod+attacker.prof;
+  // Burn disadvantage on physical
+  if(mv.cat==='Physical'&&attacker.conditions.includes('Burned')&&!isCrit){
+    const r2=rollD(20);const alt=r2+mpMod+attacker.prof;
+    if(alt<attackTotal&&alt<defender.ac){clog(`<p class="cl-miss">${attacker.name}'s ${esc(mv.name)} missed (burn disadvantage)!</p>`);return;}
+  }
+  if(!isCrit&&attackTotal<defender.ac){clog(`<p class="cl-miss">${attacker.name}'s ${esc(mv.name)} missed! (${attackTotal} vs AC ${defender.ac})</p>`);return;}
+  if(isCrit)clog('<p class="cl-crit">⭐ Critical Hit!</p>');
+  let dmg=rollExpr(mv.dmg);if(mv.dmg&&mv.dmg!=='—')dmg+=mpMod;
+  if(isCrit)dmg+=rollExpr(mv.dmg);
+  const hasStab=(attacker.types||[]).some(t=>t.toLowerCase()===mv.type.toLowerCase());
+  if(hasStab){dmg+=attacker.prof;clog(`<p style="font-size:10px;color:var(--gold)"> + STAB (+${attacker.prof})</p>`);}
+  let final=Math.max(1,dmg);
+  if(eff>=2){final=Math.floor(final*2);clog('<p class="cl-super"> Super effective! ×2</p>');}
+  else if(eff<=.5){final=Math.max(1,Math.floor(final*.5));clog('<p class="cl-resist"> Not very effective… ×½</p>');}
+  // Cover intercept check (enemy hitting player)
+  if(!isEnemy&&defender.side==='player'){
+    const covering=CB.companions.find(c=>c.cmdQueued==='cover'&&c.hp>0);
+    if(covering){
+      const split=Math.floor(final/2);
+      covering.hp=Math.max(0,covering.hp-split);defender.hp=Math.max(0,defender.hp-split);
+      clog(`<p class="cl-bond">🛡 ${covering.name} covers ${defender.name}! ${split} damage each.</p>`);
+      covering.cmdQueued=null;
+      if(covering.hp<=0)handleFaint(covering);if(defender.hp<=0)handleFaint(defender);
+      renderArena();return;
+    }
+    // Bond 75+ passive intercept (30% chance)
+    const inter=CB.companions.find(c=>(c.bond||0)>=75&&c.hp>0&&Math.random()<.3);
+    if(inter){
+      const red=Math.floor(final/2);inter.hp=Math.max(0,inter.hp-red);defender.hp=Math.max(0,defender.hp-red);
+      clog(`<p class="cl-bond">⚡ ${inter.name} intercepts! (Bond 75+) — absorbs half the hit!</p>`);
+      if(inter.hp<=0)handleFaint(inter);if(defender.hp<=0)handleFaint(defender);
+      renderArena();return;
+    }
+  }
+  defender.hp=Math.max(0,defender.hp-final);
+  clog(`<p class="cl-hit">${attacker.name}'s <b>${esc(mv.name)}</b> hit ${defender.name} for <b>${final}</b> ${mv.type} damage! (${defender.hp}/${defender.maxHp} HP)</p>`);
+  flashCard(defender.id,isCrit?'crit-a':'hit-a');
+  if(defender.hp<=0)handleFaint(defender);
+  renderArena();checkEnd();
+}
+
+function resolveStatus(attacker,mv,defender){
+  const nm=mv.name.toLowerCase();
+  if(nm.includes('sleep')||nm.includes('hypnos')||nm.includes('sing')||nm.includes('spore'))applyStatus(defender,'Asleep',3);
+  else if(nm.includes('poison')||nm.includes('toxic'))applyStatus(defender,'Poisoned');
+  else if(nm.includes('para')||nm.includes('thunder wave'))applyStatus(defender,'Paralyzed');
+  else if(nm.includes('will-o')||nm.includes('burn'))applyStatus(defender,'Burned');
+  else if(nm.includes('confus')||nm.includes('supersonic'))applyStatus(defender,'Confused',3);
+  else clog(`<p class="cl-status">${attacker.name} used ${esc(mv.name)}. DM narrates the effect!</p>`);
+}
+
+function applyStatus(target,status,dur){
+  if(target.conditions.includes(status)){clog(`<p class="cl-status">${target.name} is already ${status}!</p>`);return;}
+  if(status==='Burned'&&target.types.some(t=>t==='Fire')){clog(`<p class="cl-immune">${target.name} is immune to burns!</p>`);return;}
+  if(status==='Paralyzed'&&target.types.some(t=>t==='Electric')){clog(`<p class="cl-immune">${target.name} is immune to paralysis!</p>`);return;}
+  if(status==='Frozen'&&target.types.some(t=>t==='Ice')){clog(`<p class="cl-immune">${target.name} is immune to freezing!</p>`);return;}
+  if(status==='Poisoned'&&target.types.some(t=>t==='Poison'||t==='Steel')){clog(`<p class="cl-immune">${target.name} is immune to poison!</p>`);return;}
+  target.conditions.push(status);if(dur)target.statusDur[status]=dur;
+  clog(`<p class="cl-status">🌀 ${target.name} is now <b>${status}</b>!</p>`);renderArena();
+}
+
+function processTurnStatus(c){
+  if(c.conditions.includes('Asleep')){clog(`<p class="cl-status">💤 ${c.name} is fast asleep!</p>`);return false;}
+  if(c.conditions.includes('Frozen')){if(rollD(20)+mmod(c.str)>=10){c.conditions=c.conditions.filter(x=>x!=='Frozen');clog(`<p class="cl-status">${c.name} thawed out!</p>`);}else{clog(`<p class="cl-status">❄ ${c.name} is frozen solid!</p>`);return false;}}
+  if(c.conditions.includes('Paralyzed')&&rollD(4)===1){clog(`<p class="cl-status">⚡ ${c.name} is paralyzed and can't move!</p>`);return false;}
+  if(c.conditions.includes('Confused')){
+    const d8=rollD(8);
+    if(d8===5){clog(`<p class="cl-status">🌀 ${c.name} is confused and misses their turn!</p>`);return false;}
+    if(d8===6){c.hp=Math.max(0,c.hp-Math.max(1,rollD(4)));clog(`<p class="cl-status">🌀 ${c.name} hurt itself in confusion!</p>`);renderArena();return false;}
+    if(d8===8){c.conditions=c.conditions.filter(x=>x!=='Confused');clog(`<p class="cl-status">${c.name} snapped out of confusion!</p>`);}
+  }
+  return true;
+}
+
+function processDOT(c){
+  if(c.conditions.includes('Burned')){const d=c.prof*2;c.hp=Math.max(0,c.hp-d);clog(`<p class="cl-status">🔥 ${c.name} took ${d} burn damage! (${c.hp}/${c.maxHp})</p>`);if(c.hp<=0)handleFaint(c);}
+  if(c.conditions.includes('Poisoned')){const d=c.prof;c.hp=Math.max(0,c.hp-d);clog(`<p class="cl-status">☠ ${c.name} took ${d} poison damage!</p>`);if(c.hp<=0)handleFaint(c);}
+  const rem=[];Object.keys(c.statusDur||{}).forEach(s=>{c.statusDur[s]--;if(c.statusDur[s]<=0)rem.push(s);});
+  rem.forEach(s=>{c.conditions=c.conditions.filter(x=>x!==s);delete c.statusDur[s];clog(`<p class="cl-status">${c.name} recovered from ${s}!</p>`);});
+}
+
+function handleFaint(c){
+  clog(`<p class="cl-super">💀 ${c.name} fainted!</p>`);
+  if(c.side==='player'){
+    const sv=rollD(20)+mmod(c.con);
+    if(sv>=10)clog(`<p class="cl-heal">❤ Death Save passed (${sv})! A companion can revive with a Reviver Seed.</p>`);
+    else clog(`<p class="cl-super">⬛ ${c.name} is unconscious!</p>`);
+    S.char.hpCur=0;updateHPUI();updateHdrStats();save();
+  }
+  renderArena();checkEnd();
+}
+
+function checkEnd(){
+  if(!CB.active)return;
+  if(CB.enemies.every(e=>e.hp<=0))endWin();
+  else if(CB.player.hp<=0&&CB.companions.every(c=>c.hp<=0))endFled();
+}
+
+// ═══════════════ ENEMY AI ═══════════════
+function resolveEnemy(){
+  const cur=CB.initiative[CB.turnIdx];if(!cur||cur.side!=='foe')return;
+  const enemy=getCombatant(cur.id);if(!enemy||enemy.hp<=0){nextTurn();return;}
+  processDOT(enemy);const canAct=processTurnStatus(enemy);
+  if(!canAct){setTimeout(()=>nextTurn(),400);return;}
+  const targets=[CB.player,...CB.companions].filter(c=>c&&c.hp>0);
+  if(!targets.length){nextTurn();return;}
+  const target=targets.reduce((a,b)=>a.hp<b.hp?a:b);
+  const dmgMoves=enemy.moves.filter(m=>m.cat!=='Status'&&m.pp>0);
+  const stMoves=enemy.moves.filter(m=>m.cat==='Status'&&m.pp>0);
+  const mv=dmgMoves.length&&(stMoves.length===0||Math.random()>.25)?dmgMoves[Math.floor(Math.random()*dmgMoves.length)]:stMoves.length?stMoves[Math.floor(Math.random()*stMoves.length)]:enemy.moves[0];
+  if(!mv){nextTurn();return;}
+  mv.pp=Math.max(0,mv.pp-1);
+  clog(`<p class="cl-sys">— ${enemy.name} used ${esc(mv.name)}! —</p>`);
+  resolveMove(enemy,mv,target,true);processDOT(enemy);renderArena();
+  setTimeout(()=>nextTurn(),600);
+}
+
+// ═══════════════ COMPANION AI ═══════════════
+function resolveCompanion(){
+  const cur=CB.initiative[CB.turnIdx];if(!cur||cur.side!=='ally')return;
+  const comp=getCombatant(cur.id);if(!comp||comp.hp<=0){nextTurn();return;}
+  processDOT(comp);const canAct=processTurnStatus(comp);
+  if(!canAct){comp.cmdQueued=null;setTimeout(()=>nextTurn(),400);return;}
+  const cmd=comp.cmdQueued;comp.cmdQueued=null;
+  const bond=comp.bond||0;
+  const target=CB.enemies.find(e=>e.hp>0);
+  // Low bond — may refuse and act independently
+  if(!cmd&&bond<15&&Math.random()<.4){clog(`<p class="cl-bond">${comp.name} holds back — their trust is too low to act reliably.</p>`);setTimeout(()=>nextTurn(),400);return;}
+  if(cmd==='withdraw'){clog(`<p class="cl-bond">${comp.name} disengages and moves to safety.</p>`);setTimeout(()=>nextTurn(),400);return;}
+  if(cmd==='support'){clog(`<p class="cl-bond">${comp.name} switches to a support role this turn.</p>`);setTimeout(()=>nextTurn(),400);return;}
+  if(!target){nextTurn();return;}
+  // Focus: attack with Advantage
+  if(cmd==='focus'){
+    const r1=rollD(20),r2=rollD(20),best=Math.max(r1,r2);
+    clog(`<p class="cl-bond">${comp.name} focuses! Advantage: rolled ${r1} and ${r2}, using ${best}.</p>`);
+    const mv=comp.moves.find(m=>m.cat!=='Status'&&m.pp>0)||comp.moves[0];
+    if(mv){
+      mv.pp=Math.max(0,mv.pp-1);
+      const mpMod=mmod(mv.cat==='Physical'?comp.str:comp.int);
+      if(best+mpMod+comp.prof>=target.ac){
+        let dmg=Math.max(1,rollExpr(mv.dmg)+mpMod);
+        target.hp=Math.max(0,target.hp-dmg);
+        clog(`<p class="cl-hit">${comp.name}'s ${esc(mv.name)} hit for ${dmg} damage! (${target.hp}/${target.maxHp})</p>`);
+        if(target.hp<=0)handleFaint(target);
+      }else clog(`<p class="cl-miss">${comp.name} missed despite Focus. (${best+mpMod+comp.prof} vs AC ${target.ac})</p>`);
+    }
+    renderArena();setTimeout(()=>nextTurn(),600);return;
+  }
+  // Default attack
+  const mv=comp.moves.find(m=>m.cat!=='Status'&&m.pp>0)||comp.moves[0];
+  if(!mv){nextTurn();return;}
+  mv.pp=Math.max(0,mv.pp-1);
+  const bMsg=bond>=75?` (${comp.name} fights with fierce loyalty!)`:``;
+  clog(`<p class="cl-sys">— ${comp.name} used ${esc(mv.name)}!${bMsg} —</p>`);
+  resolveMove(comp,mv,target,false);processDOT(comp);renderArena();
+  setTimeout(()=>nextTurn(),600);
+}
+
+// ═══════════════ TURN MANAGEMENT ═══════════════
+function nextTurn(){
+  if(!CB.active)return;
+  const curC=getCombatant(CB.initiative[CB.turnIdx]?.id);if(curC&&curC.hp>0)processDOT(curC);
+  CB.turnIdx++;
+  if(CB.turnIdx>=CB.initiative.length){
+    CB.turnIdx=0;CB.round++;
+    clog(`<p class="cl-sys">⚔ ROUND ${CB.round}</p>`);
+    document.getElementById('round-num').textContent=CB.round;
+  }
+  let safety=0;
+  while(CB.initiative[CB.turnIdx]){const c=getCombatant(CB.initiative[CB.turnIdx].id);if(c&&c.hp>0)break;CB.turnIdx++;if(CB.turnIdx>=CB.initiative.length){CB.turnIdx=0;CB.round++;}if(++safety>20)break;}
+  renderInitBar();updateTurnCards();renderArena();checkEnd();
+}
+
+function doFlee(){
+  const r=rollD(20)+mmod(CB.player?.dex||10);
+  if(r>=12){clog(`<p class="cl-heal">🏃 Fled successfully! (${r})</p>`);endFled();}
+  else{clog(`<p class="cl-miss">🏃 Couldn't flee! (${r}, need 12+)</p>`);nextTurn();}
+}
+function doWait(){clog(`<p class="cl-miss">${CB.initiative[CB.turnIdx]?.name||'You'} waits and observes.</p>`);nextTurn();}
+
+// ═══════════════ BAG IN COMBAT ═══════════════
+function useBagItem(){
+  if(!S.inventory.length){clog('<p class="cl-miss">Bag is empty!</p>');return;}
+  const names=S.inventory.map((it,i)=>`${i+1}. ${it.name} ×${it.qty}`).join('\n');
+  const ch=prompt(`Use which item?\n${names}\n\nNumber:`);const idx=parseInt(ch)-1;
+  if(isNaN(idx)||!S.inventory[idx])return;
+  const item=S.inventory[idx];const nm=item.name.toLowerCase();
+  if(nm.includes('oran')){const h=10;CB.player.hp=Math.min(CB.player.maxHp,CB.player.hp+h);clog(`<p class="cl-heal">Oran Berry: +${h} HP! (${CB.player.hp}/${CB.player.maxHp})</p>`);}
+  else if(nm.includes('sitrus')){const h=Math.floor(CB.player.maxHp*.25);CB.player.hp=Math.min(CB.player.maxHp,CB.player.hp+h);clog(`<p class="cl-heal">Sitrus Berry: +${h} HP!</p>`);}
+  else if(nm.includes('reviver')){const f=[...CB.companions].find(c=>c.hp<=0);if(f){f.hp=Math.floor(f.maxHp/2);clog(`<p class="cl-heal">${f.name} revived with ${f.hp} HP!</p>`);}else if(CB.player.hp<=0){CB.player.hp=Math.floor(CB.player.maxHp/2);clog(`<p class="cl-heal">You revived with ${CB.player.hp} HP!</p>`);}}
+  else if(nm.includes('ether')){CB.player.moves.forEach(m=>m.pp=m.ppmax);clog('<p class="cl-heal">PP restored!</p>');}
+  else if(nm.includes('elixir')){CB.player.moves.forEach(m=>m.pp=m.ppmax);CB.companions.forEach(c=>c.moves.forEach(m=>m.pp=m.ppmax));clog('<p class="cl-heal">All PP restored!</p>');}
+  else if(nm.includes('blast seed')){const t=CB.enemies.find(e=>e.hp>0);if(t){t.hp=Math.max(0,t.hp-40);clog(`<p class="cl-hit">Blast Seed — 40 Fire damage to ${t.name}!</p>`);if(t.hp<=0)handleFaint(t);}}
+  else if(nm.includes('escape orb')){clog('<p class="cl-heal">Escape Orb — escaping the dungeon!</p>');endFled();return;}
+  else if(nm.includes('pecha')){CB.player.conditions=CB.player.conditions.filter(c=>c!=='Poisoned');clog('<p class="cl-heal">Cured Poisoned!</p>');}
+  else if(nm.includes('rawst')){CB.player.conditions=CB.player.conditions.filter(c=>c!=='Burned');clog('<p class="cl-heal">Cured Burned!</p>');}
+  else if(nm.includes('cheri')){CB.player.conditions=CB.player.conditions.filter(c=>c!=='Paralyzed');clog('<p class="cl-heal">Cured Paralyzed!</p>');}
+  else if(nm.includes('aspear')){CB.player.conditions=CB.player.conditions.filter(c=>c!=='Frozen');clog('<p class="cl-heal">Cured Frozen!</p>');}
+  else clog(`<p class="cl-status">Used ${esc(item.name)}. DM narrates the effect!</p>`);
+  if(item.qty>1)item.qty--;else S.inventory.splice(idx,1);
+  save();renderInv();renderArena();renderMoveGrid(CB.player);nextTurn();
+}
+
+// ═══════════════ END COMBAT ═══════════════
+function endWin(){
+  CB.active=false;
+  const xp=CB.enemies.reduce((a,e)=>a+e.level*25,0);
+  clog(`<p class="cl-sys">⭐ VICTORY! Round ${CB.round}. ~${xp} XP earned.</p>`);
+  if(CB.player){S.char.hpCur=CB.player.hp;save();}
+  grantXP(xp);updateHPUI();updateHdrStats();
+  // Mark cleared if boss floor
+  const locId=S.map.currentLoc;
+  if(locId&&locId!=='hub'){
+    const loc=LOCATIONS[locId];
+    if(loc&&(S.map.floorProgress?.[locId]||0)>=loc.floors){
+      S.map.locStatus[locId]='Cleared';save();
+      addLog(`<p class="bev">✓ ${loc.name} fully cleared!</p>`);
+      checkRoomUnlocks();
+    }
+  }
+  document.getElementById('nb-combat').classList.remove('show');
+  ['player-card','enemy-card','comp-card'].forEach(id=>document.getElementById(id).style.display='none');
+  setTimeout(()=>{document.getElementById('enc-setup').style.display='block';document.getElementById('combat-active').style.display='none';document.getElementById('enc-status').textContent='';},800);
+}
+
+function endFled(){
+  CB.active=false;
+  if(CB.player){S.char.hpCur=CB.player.hp;save();}
+  updateHPUI();updateHdrStats();
+  clog('<p class="cl-sys">Combat ended.</p>');
+  document.getElementById('nb-combat').classList.remove('show');
+  ['player-card','enemy-card','comp-card'].forEach(id=>document.getElementById(id).style.display='none');
+  setTimeout(()=>{document.getElementById('enc-setup').style.display='block';document.getElementById('combat-active').style.display='none';},600);
+}
+
+function flashCard(id,cls){const el=document.getElementById('cc-'+id);if(!el)return;el.classList.add(cls);setTimeout(()=>el.classList.remove(cls),500);}
+function clog(html){const log=document.getElementById('clog');if(!log)return;const d=document.createElement('div');d.innerHTML=html;log.appendChild(d);log.scrollTop=log.scrollHeight;}
+
+// ═══════════════ PORTRAIT CACHE & DIALOGUE RENDERER ═══════════════
+const portCache={};
+function buildPortCache(){
+  if(S.char.name)portCache[S.char.name.toLowerCase()]={url:S.char.portraitUrl,isPlayer:true};
+  if(S.char.species)portCache[S.char.species.toLowerCase()]={url:S.char.portraitUrl,isPlayer:true};
+  (S.companions||[]).filter(Boolean).forEach(c=>{
+    if(c.name)portCache[c.name.toLowerCase()]={url:c.portraitUrl};
+    if(c.species)portCache[c.species.toLowerCase()]={url:c.portraitUrl};
+  });
+  HUB_NPCS.forEach(n=>{if(n.portraitUrl)portCache[n.name.toLowerCase()]={url:n.portraitUrl};});
+}
+
+function renderDMResp(txt){
+  buildPortCache();
+  const dlgPat=/^\[([^\]]+)\]:\s*["""''""](.+)["""''""]?\s*$/;
+  const lines=txt.split('\n').filter(l=>l.trim());
+  let html='';
+  lines.forEach(line=>{
+    const m=line.match(dlgPat);
+    if(m){
+      const spkr=m[1].trim(),speech=m[2].trim(),key=spkr.toLowerCase();
+      const cached=portCache[key];
+      const isMe=cached?.isPlayer||key===(S.char.name||'').toLowerCase();
+      const pUrl=cached?.url||null;
+      const imgH=pUrl
+        ?`<img src="${pUrl}" alt="${esc(spkr)}" style="width:44px;height:44px;image-rendering:pixelated;border-radius:5px;border:1px solid var(--b1)"/>`
+        :`<div style="width:44px;height:44px;background:var(--ink2);border:1px solid var(--b1);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--dim)">${esc(spkr.slice(0,3))}</div>`;
+      html+=`<div class="bw${isMe?' me':''}"><div class="bsp">${imgH}<span class="bn" style="color:${isMe?'var(--green2)':'var(--gold)'}">${esc(spkr)}</span></div><div class="btxt">${esc(speech)}</div></div>`;
+      // Background portrait fetch for unknown speakers
+      if(!portCache[key]){
+        const slug=key.replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+        fetch(`${POKEAPI}/pokemon/${slug}`).then(r=>r.ok?r.json():null).then(async d=>{
+          if(!d)return;const u=await findPortrait(d.id,'Normal');if(u)portCache[key]={url:u};
+        }).catch(()=>{});
+      }
+    }else{
+      html+=`<p class="dm">${esc(line)}</p>`;
+    }
+  });
+  return html||`<p class="dm">${esc(txt)}</p>`;
+}
+
+// ═══════════════ STORY LOG ═══════════════
+function addLog(html){
+  const log=document.getElementById('log');if(!log)return;
+  const d=document.createElement('div');d.innerHTML=html;log.appendChild(d);log.scrollTop=log.scrollHeight;
+  const mc=document.getElementById('mem-ct');if(mc)mc.textContent=S.hist.length;
+}
+
+function renderLog(){
+  const log=document.getElementById('log');if(!log)return;log.innerHTML='';
+  if(!S.hist.length){
+    log.innerHTML='<p class="sys">Mew\'s Manor Chronicle</p><p class="dm">Set up your character on the Character tab, generate companions on the Party tab, configure your campaign in Setup, then press Begin Adventure.</p>';
+    return;
+  }
+  buildPortCache();
+  S.hist.forEach(e=>{
+    if(e.role==='user'){
+      const pUrl=portCache[(S.char.name||'').toLowerCase()]?.url||S.char.portraitUrl;
+      const img=pUrl
+        ?`<img src="${pUrl}" style="width:44px;height:44px;image-rendering:pixelated;border-radius:5px;border:1px solid rgba(32,184,64,.3)" alt="you"/>`
+        :`<div style="width:44px;height:44px;background:var(--ink2);border:1px solid var(--b1);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--dim)">you</div>`;
+      addLog(`<div class="bw me"><div class="bsp">${img}<span class="bn" style="color:var(--green2)">${esc(S.char.name||'You')}</span></div><div class="btxt">${esc(e.content)}</div></div>`);
+    }else{
+      addLog(renderDMResp(e.content));
+    }
+  });
+}
+
+// ═══════════════ DM SYSTEM PROMPT ═══════════════
+function buildSys(){
+  const c=S.char,s=S.settings;
+  const tone={
+    epic:'Dramatic flair, vivid imagery, high stakes.',
+    gritty:'Tense and dark. Honest about danger and consequences.',
+    light:'Warm, playful, Pokémon charm welcome.',
+    mystery:'Atmospheric, cryptic, layered. Let things linger.'
+  }[s.style||'mystery'];
+  const comps=(S.companions||[]).filter(c=>c&&!c.hasLeft).map(n=>{
+    const bt=n.bond>=80?'deeply bonded — may hint at their secret':n.bond>=50?'trusted — increasingly open':n.bond>=25?'warming up — cautious but engaged':'guarded — reveals nothing personal';
+    return `${n.name} (${n.species} | ${n.archetype})\n  Personality: ${n.personality}\n  Here because: ${n.motivation}\n  Secret (NEVER reveal bluntly — only at high bond or perfectly dramatic moments): ${n.secret}\n  Quirk: ${n.quirk}\n  Bond: ${n.bond}/100 — ${bt}\n  Voice: write their dialogue to match their personality with a distinct speech pattern.`;
+  }).join('\n\n')||'No active companions.';
+  const left=(S.companions||[]).filter(c=>c&&c.hasLeft).map(n=>n.name).join(', ');
+  const conds=Object.entries(c.conditions||{}).filter(([,v])=>v).map(([k])=>k).join(', ')||'none';
+  const locId=S.map?.currentLoc||'hub';
+  const locName=LOCATIONS[locId]?.name||"Mew's Manor";
+  const locFloor=S.map?.floorProgress?.[locId]||0;
+  const locDesc=locFloor>0&&LOCATIONS[locId]?.floorThemes?.[locFloor-1]?`Floor ${locFloor}: ${LOCATIONS[locId].floorThemes[locFloor-1]}`:'';
+  const mem=S.summary?`\n\nLONG-TERM MEMORY (earlier events):\n${S.summary}`:'';
+  const activeQuests=QUESTS.filter(q=>S.quests[q.id]==='active').map(q=>q.title).join(', ');
+
+  return `You are the Dungeon Master for "Mew's Manor" — a solo Pokémon Mystery Dungeon D&D 5e campaign. You remember everything that has happened.${mem}
+
+CAMPAIGN: ${s.name||"Mew's Manor"}
+SETTING: ${s.set||"An ancient manor that appears decrepit outside but is impossibly alive within. Every room is a portal to a different world."}
+GOAL: ${s.goal||'Explore the manor and discover its secrets.'}
+TONE: ${tone}
+CURRENT LOCATION: ${locName}${locDesc?' — '+locDesc:''}
+${activeQuests?`ACTIVE QUESTS: ${activeQuests}`:''}
+
+PLAYER: ${c.name||'?'} the ${c.species||'?'} (${c.types||'?'})
+Level ${c.level||1} | HP ${c.hpCur}/${c.hpMax} | AC ${c.ac} | Prof +${c.prof}
+STR ${c.str} DEX ${c.dex} CON ${c.con} INT ${c.int} WIS ${c.wis} CHA ${c.cha}
+Moves: ${S.moves.map(m=>`${m.name}(${m.type},PP:${m.pp}/${m.ppmax})`).join(', ')||'none'}
+Items: ${S.inventory.map(i=>`${i.name}×${i.qty}`).join(', ')||'nothing'}
+Conditions: ${conds}${left?`\nFormer companions who left: ${left}`:''}
+
+PARTY:
+${comps}
+
+MEW'S MANOR LORE:
+The manor exists at a nexus point between worlds. Each room is a portal — The Library leads to infinite archives of forgotten knowledge, The Cellar descends into ancient catacombs. More rooms remain locked, their nature unknown. Mew herself has not been seen in years, but her presence is felt in the warmth the manor provides to all who live here. The residents of the Living Room have their own histories and reasons for staying.
+
+RULES:
+- ALL characters are Pokémon. No human trainers. No Poké Balls. No catching mechanics.
+- When any named character speaks, format that line EXACTLY as: [NAME]: "dialogue here" — this is critical for portrait display.
+- Each companion has a DISTINCT voice matching their personality. They have opinions, fears, and agendas. They may disagree with the player or act on their own interests.
+- Bond level controls openness: low bond = guarded and cautious, high bond = vulnerable and trusting. Secrets only surface at high bond or perfectly dramatic moments. Never expose secrets bluntly.
+- Reference past events. Callback to earlier moments. Let the story breathe and grow.
+- Write 2-4 vivid paragraphs per response. Always end with a clear situation or choice for the player.
+- The manor is alive with personality — rooms have moods, weather affects dungeons, NPCs have their own agendas.`;
+}
+
+// ═══════════════ MEMORY SUMMARIZATION ═══════════════
+async function maybeSummarize(){
+  if(S.hist.length<=MAX_HIST)return;
+  const overflow=S.hist.slice(0,S.hist.length-MAX_HIST);
+  const txt=overflow.map(e=>e.role+': '+e.content).join('\n\n');
+  try{
+    const r=await fetch(API_URL,{method:'POST',headers:H(),body:JSON.stringify({
+      model:MDL,max_tokens:350,
+      messages:[{role:'user',content:`Summarize these adventure events in 1-2 compact paragraphs covering: what happened, who did what, what bonds changed, any secrets revealed, any locations explored. Preserve every important detail concisely.\n\n${txt}`}]
+    })});
+    const d=await r.json();if(d.error)return;
+    const s=d.content?.map(b=>b.text||'').join('')||'';
+    if(s){S.summary=(S.summary?S.summary+'\n\n':'')+s;S.hist=S.hist.slice(S.hist.length-MAX_HIST);save();}
+  }catch(e){console.warn('Summarize failed:',e);}
+}
+
+// ═══════════════ CALL DM ═══════════════
+async function callDM(msg,addUserMsg=true){
+  if(!getKey()){
+    addLog('<p class="sys">No API key — enter your key in Setup to enable AI narration.</p>');
+    return;
+  }
+  const btn=document.getElementById('act-btn');if(btn)btn.disabled=true;
+
+  if(addUserMsg){
+    buildPortCache();
+    const pUrl=portCache[(S.char.name||'').toLowerCase()]?.url||S.char.portraitUrl;
+    const img=pUrl
+      ?`<img src="${pUrl}" style="width:44px;height:44px;image-rendering:pixelated;border-radius:5px;border:1px solid rgba(32,184,64,.3)" alt="you"/>`
+      :`<div style="width:44px;height:44px;background:var(--ink2);border:1px solid var(--b1);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--dim)">you</div>`;
+    addLog(`<div class="bw me"><div class="bsp">${img}<span class="bn" style="color:var(--green2)">${esc(S.char.name||'You')}</span></div><div class="btxt">${esc(msg)}</div></div>`);
+    S.hist.push({role:'user',content:msg});save();
+  }
+
+  const lid='ld-'+Date.now();
+  addLog(`<p class="dm" id="${lid}">Narrating…</p>`);
+  let dots=0;
+  const dt=setInterval(()=>{const e=document.getElementById(lid);if(e)e.textContent='Narrating'+'…'.repeat(dots++%3+1);},500);
+
+  try{
+    await maybeSummarize();
+    const r=await fetch(API_URL,{
+      method:'POST',headers:H(),
+      body:JSON.stringify({
+        model:MDL,max_tokens:1100,
+        system:buildSys(),
+        messages:S.hist.map(e=>({role:e.role,content:e.content}))
+      })
+    });
+    const d=await r.json();
+    if(d.error)throw new Error(`Anthropic API error ${r.status}: ${d.error.message||JSON.stringify(d.error)}`);
+    const txt=d.content?.map(b=>b.text||'').join('')||'The dungeon remains silent…';
+    clearInterval(dt);const le=document.getElementById(lid);if(le)le.remove();
+    const html=renderDMResp(txt);
+    S.hist.push({role:'assistant',content:txt});save();
+    addLog(html);
+  }catch(e){
+    clearInterval(dt);const le=document.getElementById(lid);if(le)le.remove();
+    addLog(`<p style="color:var(--red2)">⚠ ${esc(e.message)}</p><p style="color:var(--dim);font-size:11px">Open browser DevTools (F12 → Console) for full details. Common fixes: check your API key is correct in Setup, make sure you have credits at console.anthropic.com</p>`);
+    console.error('callDM error:',e);
+  }
+  if(btn)btn.disabled=false;
+}
+
+// ═══════════════ STORY ACTIONS ═══════════════
+async function startAdv(){
+  if(!S.char.species){alert('Set up your character first on the Character tab!');goTab('char');return;}
+  if(!getKey()){showKeyGate();return;}
+  addLog('<p class="sys">— Adventure Begins —</p>');
+  const comps=(S.companions||[]).filter(c=>c&&!c.hasLeft);
+  let ci='';
+  if(comps.length){
+    const intro=comps.map(n=>`${n.name} the ${n.species} (${n.archetype} — first words: "${n.firstWords}")`).join(', ');
+    ci=` Your party includes: ${intro}. Introduce each companion through their first words and actions, not through exposition.`;
+  }
+  await callDM(`Begin the adventure. Open with a vivid atmospheric scene as ${S.char.name||'the Pokémon'} (${S.char.species}) arrives at Mew's Manor for the first time.${ci} Establish the mood, describe the manor's impossible warmth, and present the first situation clearly.`,false);
+}
+
+async function takeAct(){
+  const a=document.getElementById('pinput').value.trim();if(!a)return;
+  document.getElementById('pinput').value='';
+  await callDM(a,true);
+}
+
+async function askDM(){
+  const a=document.getElementById('pinput').value.trim();
+  if(!a){alert('Type your question first.');return;}
+  document.getElementById('pinput').value='';
+  await callDM('[Out of character question] '+a,true);
+}
+
+function qa(t){document.getElementById('pinput').value=t;takeAct();}
+
+function rollD20(){
+  const r=Math.ceil(Math.random()*20);
+  const f=r===20?'NAT 20!':r===1?'Nat 1!':r>=15?'Strong Success':r>=10?'Partial Success':'Fail';
+  addLog(`<p class="sys">🎲 d20 → <b>${r}</b> — ${f}</p>`);
+}
+
+// ═══════════════ BOOT ═══════════════
+function boot(){
+  load();
+
+  // Check API key
+  if(getKey())document.getElementById('key-gate').style.display='none';
+
+  // Restore form values
+  const g=id=>document.getElementById(id);
+  if(g('s-name'))g('s-name').value=S.settings.name||"Mew's Manor";
+  if(g('s-set'))g('s-set').value=S.settings.set||'';
+  if(g('s-goal'))g('s-goal').value=S.settings.goal||'';
+  if(g('s-style'))g('s-style').value=S.settings.style||'mystery';
+  if(g('r-gold'))g('r-gold').value=S.res.gold||100;
+  if(g('r-rp'))g('r-rp').value=S.res.rp||0;
+  if(g('r-orbs'))g('r-orbs').value=S.res.orbs||0;
+  if(g('c-name'))g('c-name').value=S.char.name||'';
+  if(g('c-sp-inp'))g('c-sp-inp').value=S.char.species||'';
+  if(g('tm-sp')&&S.char.species)g('tm-sp').value=S.char.species;
+
+  // Restore character sheet
+  if(S.char.species){
+    applySheet();
+    if(S.char.portraitUrl)applyPortrait();
+    renderEmoRow();
+  }
+
+  // Render all panels
+  renderParty();
+  renderInv();
+  renderSkills();
+  renderSTP();
+  renderConds();
+  renderMoves();
+  renderMovesMgr();
+  updatePartyBar();
+  updateHdrStats();
+
+  // Show party buttons if party exists
+  if((S.companions||[]).filter(Boolean).length){
+    const rb=g('reroll-btn');if(rb)rb.style.display='inline-flex';
+    const cb=g('clear-btn');if(cb)cb.style.display='inline-flex';
+  }
+
+  // Restore map state
+  if(S.map?.currentLoc){
+    const dot=document.getElementById('player-dot');
+    const loc=LOCATIONS[S.map.currentLoc];
+    if(dot&&loc){dot.setAttribute('cx',loc.svgX);dot.setAttribute('cy',loc.svgY);}
+  }
+  renderLocList();
+
+  // Restore story log
+  if(S.hist.length)renderLog();
+
+  // Badge indicators
+  if(!S.char.species)g('nb-char')?.classList.add('show');
+  if(!(S.companions||[]).filter(Boolean).length)g('nb-party')?.classList.add('show');
+
+  // Load autocomplete names in background
+  loadAcNames();
+
+  // Check room unlocks based on saved state
+  checkRoomUnlocks();
+
+  console.log('Mew\'s Manor Chronicle loaded.');
+}
+
+// ═══════════════ API KEY TEST ═══════════════
+async function testAPIKey(){
+  const res=document.getElementById('key-test-result');
+  const key=getKey();
+  if(!key){res.innerHTML='<span style="color:var(--red2)">No key saved. Enter your key first.</span>';return;}
+  res.innerHTML='<span style="color:var(--dim)">Testing…</span>';
+  try{
+    const r=await fetch(API_URL,{
+      method:'POST',
+      headers:H(),
+      body:JSON.stringify({model:MDL,max_tokens:10,messages:[{role:'user',content:'Say: OK'}]})
+    });
+    const d=await r.json();
+    if(d.error){
+      res.innerHTML=`<span style="color:var(--red2)">❌ API Error ${r.status}: ${d.error.message||d.error.type||JSON.stringify(d.error)}</span>`;
+    } else if(d.content){
+      res.innerHTML=`<span style="color:var(--green2)">✅ API key is working! (HTTP ${r.status})</span>`;
+    } else {
+      res.innerHTML=`<span style="color:var(--amber2)">⚠ Unexpected response: ${JSON.stringify(d).slice(0,100)}</span>`;
+    }
+  }catch(e){
+    res.innerHTML=`<span style="color:var(--red2)">❌ Network error: ${e.message}. Check browser console (F12).</span>`;
+    console.error('API test error:',e);
+  }
+}
+
+boot();
+</script></body></html>
